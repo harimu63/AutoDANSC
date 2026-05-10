@@ -46,10 +46,37 @@ screen -S setup ./setup.sh
 ```
 ---
 ## Catatan
-> Jika client susah konek, silakan cek listening port tidak conflict dan nameserver pastikan tidak overwrite.
+> ⚠️Jika client susah konek, silakan cek listening port tidak conflict dan nameserver pastikan tidak overwrite.
 ```
 ss -tulpn | grep "127.0.0.1"
-lsof -i :443
+sudo lsof -i :443,80
+```
+```
+tcp   LISTEN 0      4096              127.0.0.1:24456      0.0.0.0:*    users:(("xray",pid=1259,fd=13))                        
+tcp   LISTEN 0      4096              127.0.0.1:23456      0.0.0.0:*    users:(("xray",pid=1259,fd=8))                         
+tcp   LISTEN 0      4096              127.0.0.1:23457      0.0.0.0:*    users:(("xray",pid=1259,fd=9))                         
+tcp   LISTEN 0      4096              127.0.0.1:25432      0.0.0.0:*    users:(("xray",pid=1259,fd=10))                        
+tcp   LISTEN 0      4096              127.0.0.1:33456      0.0.0.0:*    users:(("xray",pid=1259,fd=12))                        
+tcp   LISTEN 0      4096              127.0.0.1:14016      0.0.0.0:*    users:(("xray",pid=1259,fd=11))                        
+tcp   LISTEN 0      4096              127.0.0.1:14017      0.0.0.0:*    users:(("xray",pid=1259,fd=3))                         
+tcp   LISTEN 0      4096              127.0.0.1:31234      0.0.0.0:*    users:(("xray",pid=1259,fd=15))                        
+tcp   LISTEN 0      4096              127.0.0.1:30300      0.0.0.0:*    users:(("xray",pid=1259,fd=6))                         
+tcp   LISTEN 0      4096              127.0.0.1:30301      0.0.0.0:*    users:(("xray",pid=1259,fd=7))                         
+tcp   LISTEN 0      4096              127.0.0.1:30310      0.0.0.0:*    users:(("xray",pid=1259,fd=14))                        
+tcp   LISTEN 0      20                127.0.0.1:25         0.0.0.0:*    users:(("exim4",pid=715,fd=4))
+```
+```
+COMMAND  PID     USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+nginx   1075     root    5u  IPv4  18490      0t0  TCP *:http (LISTEN)
+nginx   1075     root    6u  IPv6  18491      0t0  TCP *:http (LISTEN)
+nginx   1075     root    7u  IPv4  18492      0t0  TCP *:https (LISTEN)
+nginx   1075     root    8u  IPv6  18493      0t0  TCP *:https (LISTEN)
+nginx   1076 www-data    5u  IPv4  18490      0t0  TCP *:http (LISTEN)
+nginx   1076 www-data    6u  IPv6  18491      0t0  TCP *:http (LISTEN)
+nginx   1076 www-data    7u  IPv4  18492      0t0  TCP *:https (LISTEN)
+nginx   1076 www-data    8u  IPv6  18493      0t0  TCP *:https (LISTEN)
+```
+```
 cat /etc/resolv.conf
 ```
 
