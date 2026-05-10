@@ -45,6 +45,15 @@ chmod +x uninstall.sh
 screen -S setup ./setup.sh
 ```
 ---
+## Catatan
+> Jika client susah konek, silakan cek listening port tidak conflict dan nameserver pastikan tidak overwrite.
+```
+ss -tulpn | grep "127.0.0.1"
+lsof -i :443
+cat /etc/resolv.conf
+```
+
+---
 ## Struktur Direktori
 
 ```bash
