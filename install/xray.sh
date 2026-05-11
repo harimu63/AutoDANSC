@@ -27,14 +27,16 @@ mkdir -p /usr/local/bin
 
 echo -e "${GREEN}⬇️ Download Xray-core...${NC}"
 
+mkdir -p /tmp/xray
+
 wget -q -O /tmp/xray.zip \
 https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip
 
-unzip -o /tmp/xray.zip -d /usr/local/bin/
+unzip -o /tmp/xray.zip -d /tmp/xray
 
-chmod +x /usr/local/bin/xray
+install -m 755 /tmp/xray/xray /usr/local/bin/xray
 
-rm -f /tmp/xray.zip
+rm -rf /tmp/xray /tmp/xray.zip
 
 # ================= DOMAIN =================
 
@@ -45,7 +47,18 @@ else
     exit 1
 fi
 
+mkdir -p /etc/xray
 echo "${domain}" > /etc/xray/domain
+
+# ================= DEPENDENCY =================
+
+echo -e "${GREEN}📦 Install dependency...${NC}"
+
+apt update -y
+apt install -y curl socat cron unzip
+
+systemctl enable cron
+systemctl start cron
 
 # ================= INSTALL ACME =================
 
@@ -63,13 +76,32 @@ chmod +x ~/.acme.sh/acme.sh
 
 ~/.acme.sh/acme.sh --register-account -m admin@$domain
 
+# ================= STOP SERVICE =================
+
+echo -e "${GREEN}🛑 Stop service yang memakai port 80...${NC}"
+
 systemctl stop nginx 2>/dev/null
+systemctl stop apache2 2>/dev/null
+
+fuser -k 80/tcp >/dev/null 2>&1
+
+# ================= ISSUE CERT =================
+
+echo -e "${GREEN}🚀 Issue SSL Certificate...${NC}"
 
 ~/.acme.sh/acme.sh \
 --issue \
---standalone \
 -d $domain \
---keylength ec-256
+--standalone \
+--keylength ec-256 \
+--force
+
+if [[ $? != 0 ]]; then
+    echo -e "${RED}❌ Gagal issue certificate!${NC}"
+    exit 1
+fi
+
+# ================= INSTALL CERT =================
 
 mkdir -p /etc/xray
 
@@ -80,6 +112,17 @@ mkdir -p /etc/xray
 --key-file /etc/xray/private.key \
 --fullchain-file /etc/xray/cert.crt
 
+# ================= PERMISSION =================
+
+chmod 600 /etc/xray/private.key
+chmod 644 /etc/xray/cert.crt
+
+# ================= RESTART SERVICE =================
+
+systemctl restart nginx 2>/dev/null
+systemctl restart xray
+
+echo -e "${GREEN}✅ Certificate berhasil dibuat untuk ${domain}${NC}"
 # ================= XRAY CONFIG =================
 
 cat > /etc/xray/config.json <<EOF
