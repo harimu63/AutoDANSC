@@ -365,7 +365,7 @@ systemctl enable xray
 rm -f /etc/nginx/sites-enabled/default
 rm -f /etc/nginx/sites-available/default
 
-cat > /etc/nginx/conf.d/xray.conf <<EOF
+cat > /etc/nginx/conf.d/xray.conf <<'EOF'
 server {
     listen 80;
     listen [::]:80;
