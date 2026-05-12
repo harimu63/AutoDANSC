@@ -78,3 +78,5 @@ echo -e "${WHITE}Total Users${NC} : $TOTAL"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
 echo ""
+read -n 1 -s -r -p "Press any key to back menu..."
+m-zivpn
