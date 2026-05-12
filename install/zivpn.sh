@@ -177,14 +177,28 @@ WantedBy=multi-user.target
 EOF
 
 # ==============================
-# OPEN FIREWALL
+# IPTABLES RULE
 # ==============================
 
-echo -e "${YELLOW}[*] Opening firewall...${NC}"
+echo -e "${YELLOW}[*] Setting iptables rules...${NC}"
 
-if command -v ufw >/dev/null 2>&1; then
-    ufw allow 5667/udp >/dev/null 2>&1
-fi
+iptables -t nat -C PREROUTING \
+-p udp --dport 6000:19999 \
+-j REDIRECT --to-ports 5667 2>/dev/null || \
+iptables -t nat -A PREROUTING \
+-p udp --dport 6000:19999 \
+-j REDIRECT --to-ports 5667
+
+# ==============================
+# SAVE IPTABLES
+# ==============================
+
+echo -e "${YELLOW}[*] Saving iptables rules...${NC}"
+
+DEBIAN_FRONTEND=noninteractive \
+apt-get install -y iptables-persistent >/dev/null 2>&1
+
+netfilter-persistent save >/dev/null 2>&1
 
 # ==============================
 # ENABLE SERVICE
