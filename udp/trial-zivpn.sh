@@ -7,25 +7,94 @@ DB="/etc/zivpn/users.db"
 
 clear
 
-user="trial$(tr -dc a-z0-9 </dev/urandom | head -c4)"
+RED='\033[1;31m'
+GREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[1;36m'
+WHITE='\033[1;37m'
+NC='\033[0m'
 
-exp=$(date -d "1 days" +"%Y-%m-%d")
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}      TRIAL ZIVPN USER${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-echo "$user $exp" >> $DB
+# ==============================
+# GENERATE USER
+# ==============================
+
+USER="trial$(tr -dc a-z0-9 </dev/urandom | head -c4)"
+
+# ==============================
+# CHECK DUPLICATE
+# ==============================
+
+while grep -qw "^$USER" $DB; do
+    USER="trial$(tr -dc a-z0-9 </dev/urandom | head -c4)"
+done
+
+# ==============================
+# TRIAL EXPIRED
+# ==============================
+
+DAYS=1
+EXP=$(date -d "$DAYS days" +"%Y-%m-%d")
+
+# ==============================
+# SAVE USER
+# ==============================
+
+echo "$USER $EXP" >> $DB
+
+# ==============================
+# REBUILD CONFIG
+# ==============================
 
 bash /root/AutoscriptXRAY/udp/rebuild-config.sh
 
+# ==============================
+# GET DOMAIN
+# ==============================
+
 DOMAIN=$(cat /etc/xray/domain 2>/dev/null)
+
+if [[ -z "$DOMAIN" ]]; then
+    DOMAIN=$(curl -s ipv4.icanhazip.com)
+fi
 
 clear
 
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "      TRIAL ZIVPN"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+# ==============================
+# OUTPUT
+# ==============================
 
-echo "Username     : $user"
-echo "Expired On   : $exp"
-echo "Host/IP      : ${DOMAIN:-YOUR-IP}"
-echo "UDP Port     : 20000-50000"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}      TRIAL ZIVPN ACCOUNT${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+printf " ${WHITE}Username${NC}    : %s\n" "$USER"
+printf " ${WHITE}Password${NC}    : %s\n" "$USER"
+printf " ${WHITE}Host/IP${NC}     : %s\n" "$DOMAIN"
+printf " ${WHITE}UDP Port${NC}    : 5667\n"
+printf " ${WHITE}Protocol${NC}    : UDP\n"
+printf " ${WHITE}OBFS${NC}        : zivpn\n"
+printf " ${WHITE}Expired On${NC}  : %s\n" "$EXP"
+
+echo ""
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+echo ""
+echo -e "${YELLOW}📱 ZIVPN CLIENT CONFIG${NC}"
+echo ""
+echo -e " Host      : ${DOMAIN}"
+echo -e " Password  : ${USER}"
+echo -e " UDP Mode  : ON"
+echo -e " TLS       : ON"
+echo -e " OBFS      : zivpn"
+
+echo ""
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+echo ""
+read -n 1 -s -r -p "Press any key to back menu..."
+m-zivpn
