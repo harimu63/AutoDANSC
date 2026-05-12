@@ -1,23 +1,25 @@
 #!/bin/bash
-# ==========================================
-# REBUILD ZIVPN CONFIG
-# ==========================================
 
 DB="/etc/zivpn/users.db"
 CONFIG="/etc/zivpn/config.json"
 
-# Generate users array
 USERS=$(awk '{print "\"" $1 "\""}' $DB | paste -sd "," -)
 
-# Create config
+if [[ -z "$USERS" ]]; then
+    USERS='"testuser"'
+fi
+
 cat > $CONFIG <<EOF
 {
-  "listen": ":5666",
-  "certFile": "zivpn.crt",
-  "keyFile": "zivpn.key",
-  "config": [ $USERS ]
+  "listen": ":5667",
+  "cert": "/etc/zivpn/zivpn.crt",
+  "key": "/etc/zivpn/zivpn.key",
+  "obfs": "zivpn",
+  "auth": {
+    "mode": "passwords",
+    "config": [ $USERS ]
+  }
 }
 EOF
 
-# Restart service
 systemctl restart zivpn
