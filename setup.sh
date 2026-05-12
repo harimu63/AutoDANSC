@@ -96,6 +96,8 @@ info "Menjalankan installer XRAY..."
 bash install/xray.sh
 info "Menjalankan installer WireGuard..."
 bash install/wg.sh
+info "Menjalankan installer UDP"
+bash install/zivpn.sh
 
 # Salin sub-menu & tools ke /usr/bin
 info "Menyalin command menu..."
