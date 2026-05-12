@@ -16,6 +16,33 @@ NC='\033[0m'
 CONFIG="/etc/xray/config.json"
 LOG="/var/log/xray/access.log"
 
+# ================= ANIMATION =================
+
+loading() {
+    local text="$1"
+
+    echo -ne "${CYAN}➜ ${text}${NC}"
+
+    for i in {1..3}; do
+        echo -ne "."
+        sleep 0.35
+    done
+
+    echo ""
+}
+
+type_text() {
+    local text="$1"
+    local delay="${2:-0.02}"
+
+    while IFS= read -r -n1 char; do
+        printf "%b" "$char"
+        sleep "$delay"
+    done <<< "$text"
+
+    echo ""
+}
+
 # ================= SYSTEM INFO =================
 
 IP=$(curl -s ipv4.icanhazip.com)
@@ -34,16 +61,23 @@ RAM=$(free -m | awk 'NR==2{printf "%sMB / %sMB",$3,$2}')
 
 DISK=$(df -h / | awk 'NR==2{print $3 "/" $2}')
 
-# ================= NETWORK =================
-
+# ================= NETWORK ===============
 IFACE=$(ip route get 1.1.1.1 | awk '{print $5; exit}')
 
-RX=$(cat /proc/net/dev | grep "$IFACE" | awk '{print $2}')
-TX=$(cat /proc/net/dev | grep "$IFACE" | awk '{print $10}')
+MONTH_NAME=$(date +"%Y-%m")
 
-RX_MB=$((RX / 1024 / 1024))
-TX_MB=$((TX / 1024 / 1024))
+TODAY=$(vnstat -i $IFACE | awk '/today/ {print $8" "$9}')
 
+YESTERDAY=$(vnstat -i $IFACE | awk '/yesterday/ {print $8" "$9}')
+
+MONTH=$(vnstat -i $IFACE | awk -v m="$MONTH_NAME" '
+$1 ~ m {print $8" "$9}
+')
+
+TOTAL_BW=$(vnstat --oneline | cut -d\; -f15)
+
+[[ -z "$YESTERDAY" ]] && YESTERDAY="0 B"
+[[ -z "$TOTAL_BW" ]] && TOTAL_BW="0 B"
 # ================= STATUS =================
 
 XRAY=$(systemctl is-active xray)
@@ -96,6 +130,25 @@ ONLINE=$(tail -n 500 /var/log/xray/access.log 2>/dev/null | \
 grep -Eo 'tcp:[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | \
 cut -d':' -f2 | sort -u | wc -l)
 
+# ===== INIT =====
+
+clear
+
+echo ""
+type_text $'\033[1;31m⚡ Booting ZNANDEV XRAY PANEL ⚡\033[0m' 0.03
+sleep 0.5
+
+loading "Loading System Modules"
+loading "Checking NGINX Service"
+loading "Checking XRAY Service"
+loading "Checking WireGuard Service"
+loading "Checking UDP Tunnel"
+loading "Reading Traffic Database"
+
+echo ""
+echo -e "${GREEN}✔ System Ready!${NC}"
+
+sleep 1
 clear
 
 # ================= HEADER =================
@@ -108,24 +161,27 @@ echo -e "${CYAN}┗━━━━━━━━━━━━━━━━━━━━�
 
 echo -e "${YELLOW}┌──────────────── SYSTEM INFO ────────────────┐${NC}"
 
-printf " ${WHITE}🌐 IP VPS      ${NC}: %-25s\n" "$IP"
-printf " ${WHITE}🌍 DOMAIN      ${NC}: %-25s\n" "$DOMAIN"
-printf " ${WHITE}🏢 ISP         ${NC}: %-25s\n" "$ISP"
-printf " ${WHITE}🐧 OS          ${NC}: %-25s\n" "$OS"
-printf " ${WHITE}⏰ UPTIME      ${NC}: %-25s\n" "$UPTIME"
-printf " ${WHITE}🧠 CPU USAGE   ${NC}: %-25s\n" "$CPU"
-printf " ${WHITE}💾 RAM USAGE   ${NC}: %-25s\n" "$RAM"
-printf " ${WHITE}🗄️ DISK USAGE   ${NC}: %-25s\n" "$DISK"
-printf " ${WHITE}🕒 SERVER TIME ${NC}: %-25s\n" "$TIME"
+printf " ${WHITE}IP VPS      ${NC}: %-25s\n" "$IP"
+printf " ${WHITE}DOMAIN      ${NC}: %-25s\n" "$DOMAIN"
+printf " ${WHITE}ISP         ${NC}: %-25s\n" "$ISP"
+printf " ${WHITE}OS          ${NC}: %-25s\n" "$OS"
+printf " ${WHITE}UPTIME      ${NC}: %-25s\n" "$UPTIME"
+printf " ${WHITE}CPU USAGE   ${NC}: %-25s\n" "$CPU"
+printf " ${WHITE}RAM USAGE   ${NC}: %-25s\n" "$RAM"
+printf " ${WHITE}DISK USAGE  ${NC}: %-25s\n" "$DISK"
+printf " ${WHITE}SERVER TIME ${NC}: %-25s\n" "$TIME"
 
 echo -e "${YELLOW}└─────────────────────────────────────────────┘${NC}"
 
-# ================= NETWORK =================
+# ================= BANDWIDTH =================
 
-echo -e "${CYAN}┌──────────────── NETWORK ────────────────────┐${NC}"
+echo -e "${CYAN}┌──────────────── BANDWIDTH ──────────────────┐${NC}"
 
-printf " ${WHITE}⬇ DOWNLOAD${NC} : %-10s" "${RX_MB} MB"
-printf " ${WHITE}⬆ UPLOAD${NC} : %-10s\n" "${TX_MB} MB"
+printf " ${WHITE}📅 TODAY${NC} : %-10s" "$TODAY"
+printf " ${WHITE}📆 YESTERDAY${NC} : %-10s\n" "$YESTERDAY"
+
+printf " ${WHITE}🗓  MONTH${NC} : %-10s" "$MONTH"
+printf " ${WHITE}💾 TOTAL${NC} : %-10s\n" "$TOTAL_BW"
 
 echo -e "${CYAN}└─────────────────────────────────────────────┘${NC}"
 
@@ -135,13 +191,13 @@ echo -e "${GREEN}┌──────────────── XRAY USER �
 
 printf " ${WHITE}🚀 VMESS${NC}: %-4s" "$VMESS"
 printf " ${WHITE}🧬 VLESS${NC}: %-4s" "$VLESS"
-printf " ${WHITE}🛡 TROJAN${NC}: %-4s\n" "$TROJAN"
+printf " ${WHITE}🛡  TROJAN${NC}: %-4s\n" "$TROJAN"
 
 printf " ${WHITE}🔒 SSWS${NC} : %-4s" "$SSWS"
 printf " ${WHITE}⚡ ZIVPN${NC}: %-4s" "$ZIVPN_USERS"
 printf " ${WHITE}👤 TOTAL${NC}: %-4s\n" "$TOTAL"
 
-printf " ${WHITE}🌐 ONLINE${NC}: %-4s\n" "$ONLINE"
+printf " ${WHITE}🌐ONLINE${NC}: %-4s\n" "$ONLINE"
 
 echo -e "${GREEN}└─────────────────────────────────────────────┘${NC}"
 
@@ -149,10 +205,11 @@ echo -e "${GREEN}└────────────────────
 
 echo -e "${BLUE}┌──────────────── SERVICE ────────────────────┐${NC}"
 
-echo -e " ${WHITE}🚀 XRAY      ${NC}: $XRAY"
-echo -e " ${WHITE}🌐 NGINX     ${NC}: $NGINX"
-echo -e " ${WHITE}🛡 WIREGUARD ${NC}: $WG"
-echo -e " ${WHITE}⚡ ZIVPN     ${NC}: $ZIVPN"
+printf " ${WHITE}🚀 XRAY${NC}      : %-18b" "$XRAY"
+printf " ${WHITE}🌐 NGINX${NC} : %-18b\n" "$NGINX"
+
+printf " ${WHITE}🛡  Wireguard${NC} : %-18b" "$WG"
+printf " ${WHITE}⚡ ZIVPN${NC} : %-18b\n" "$ZIVPN"
 
 echo -e "${BLUE}└─────────────────────────────────────────────┘${NC}"
 
@@ -162,10 +219,10 @@ echo -e "${RED}┌──────────────── MAIN MENU ─
 
 echo -e " [1] 🚀 VMESS        [6] ⚡ UDP ZIVPN"
 echo -e " [2] 🧬 VLESS        [7] 🧰 TOOLS"
-echo -e " [3] 🛡 TROJAN       [8] 📊 STATUS"
+echo -e " [3] 🛡 TROJAN        [8] 📊 STATUS"
 echo -e " [4] 🔒 SSWS         [9] 🧹 CLEAR RAM"
 echo -e " [5] 🌐 WIREGUARD    [10] 🔄 REBOOT VPS"
-echo -e "                     [x] ❌ EXIT"
+echo -e " [x] ❌ EXIT"
 
 echo -e "${RED}└─────────────────────────────────────────────┘${NC}"
 
