@@ -197,7 +197,7 @@ printf " ${WHITE}🔒 SSWS${NC} : %-4s" "$SSWS"
 printf " ${WHITE}⚡ ZIVPN${NC}: %-4s" "$ZIVPN_USERS"
 printf " ${WHITE}👤 TOTAL${NC}: %-4s\n" "$TOTAL"
 
-printf " ${WHITE}🌐ONLINE${NC}: %-4s\n" "$ONLINE"
+printf "               ${WHITE} 🌐ONLINE${NC}: %-3s\n" "$ONLINE"
 
 echo -e "${GREEN}└─────────────────────────────────────────────┘${NC}"
 
@@ -217,10 +217,10 @@ echo -e "${RED}┌──────────────── MAIN MENU ─
 
 echo -e " [1] 🚀 VMESS        [7] 🧰 TOOLS"
 echo -e " [2] 🧬 VLESS        [8] 📊 STATUS"
-echo -e " [3] 🛡 TROJAN        [9] 🧹 CLEAR RAM"
-echo -e " [4] 🔒 SSWS          [10] 🔄 REBOOT VPS"
-echo -e " [5] 🌐 WIREGUARD     [11] 🗑️ UNINSTALL"
-echo -e " [6] ⚡ UDP ZIVPN     [x] ❌ EXIT"
+echo -e " [3] 🛡  TROJAN       [9] 🧹 CLEAR RAM"
+echo -e " [4] 🔒 SSWS         [10] 🔄 REBOOT VPS"
+echo -e " [5] 🌐 WIREGUARD    [11] 🗑️ UNINSTALL"
+echo -e " [6] ⚡ UDP ZIVPN    [x] ❌ EXIT"
 
 echo -e "${RED}└─────────────────────────────────────────────┘${NC}"
 
