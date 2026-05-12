@@ -6,6 +6,7 @@
 RED='\033[1;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+CYAN='\033[1;36m'
 NC='\033[0m'
 
 # ================= CHECK ROOT =================
@@ -41,7 +42,11 @@ err() {
 
 confirm
 
-echo -e "${YELLOW}🚮 Menghapus layanan AutoscriptXRAY...${NC}"
+clear
+
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${YELLOW}🚮 UNINSTALL AUTOSCRIPTXRAY${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
 # ================= STOP SERVICE =================
 
@@ -50,6 +55,8 @@ services=(
     sshws
     stunnel4
     dropbear
+    wg-quick@wg0
+    zivpn
 )
 
 for svc in "${services[@]}"; do
@@ -66,6 +73,7 @@ info "Menghapus systemd service..."
 
 rm -f /etc/systemd/system/xray.service
 rm -f /etc/systemd/system/sshws.service
+rm -f /etc/systemd/system/zivpn.service
 
 rm -f /etc/systemd/system/acme*.service
 rm -f /etc/systemd/system/acme*.timer
@@ -78,12 +86,19 @@ info "Menghapus binary Xray..."
 
 rm -f /usr/local/bin/xray
 
+# ================= REMOVE ZIVPN =================
+
+info "Menghapus binary ZIVPN..."
+
+rm -f /usr/local/bin/zivpn
+
 # ================= REMOVE CONFIG =================
 
 info "Menghapus konfigurasi..."
 
 rm -rf /etc/xray
 rm -rf /etc/v2ray
+rm -rf /etc/zivpn
 rm -rf /etc/autoscriptvpn
 
 rm -f /etc/xray/private.key
@@ -105,14 +120,12 @@ binaries=(
     m-trojan
     m-ssws
     m-wg
+    m-zivpn
     tools-menu
-    trial-ssh
     backup.sh
     speedtest.sh
     domain.sh
-    restart-ws.sh
-    stop-ws.sh
-    service-install.sh
+    running.sh
 )
 
 for bin in "${binaries[@]}"; do
@@ -141,7 +154,7 @@ if [[ -d ~/.acme.sh ]]; then
     rm -rf ~/.acme.sh
 fi
 
-# ================= OPTIONAL CLEAN =================
+# ================= CLEAN TEMP =================
 
 warn "Membersihkan file temporary..."
 
@@ -150,11 +163,23 @@ rm -f /tmp/xray.zip
 
 # ================= REMOVE SOURCE =================
 
+info "Menghapus source AutoscriptXRAY..."
+
 rm -rf ~/AutoscriptXRAY
 
 # ================= FINISH =================
 
+clear
+
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}✅ AUTOSCRIPTXRAY BERHASIL DIHAPUS${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
 echo ""
-echo -e "${GREEN}✅ AutoscriptXRAY berhasil dihapus.${NC}"
+echo -e " XRAY       : REMOVED"
+echo -e " WireGuard  : REMOVED"
+echo -e " UDP ZIVPN  : REMOVED"
+
+echo ""
 echo -e "${YELLOW}💡 Disarankan reboot VPS:${NC} reboot"
 echo ""
