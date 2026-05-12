@@ -213,16 +213,14 @@ printf " ${WHITE}⚡ ZIVPN${NC} : %-18b\n" "$ZIVPN"
 
 echo -e "${BLUE}└─────────────────────────────────────────────┘${NC}"
 
-# ================= MENU =================
-
 echo -e "${RED}┌──────────────── MAIN MENU ──────────────────┐${NC}"
 
-echo -e " [1] 🚀 VMESS        [6] ⚡ UDP ZIVPN"
-echo -e " [2] 🧬 VLESS        [7] 🧰 TOOLS"
-echo -e " [3] 🛡 TROJAN        [8] 📊 STATUS"
-echo -e " [4] 🔒 SSWS         [9] 🧹 CLEAR RAM"
-echo -e " [5] 🌐 WIREGUARD    [10] 🔄 REBOOT VPS"
-echo -e " [x] ❌ EXIT"
+echo -e " [1] 🚀 VMESS        [7] 🧰 TOOLS"
+echo -e " [2] 🧬 VLESS        [8] 📊 STATUS"
+echo -e " [3] 🛡 TROJAN        [9] 🧹 CLEAR RAM"
+echo -e " [4] 🔒 SSWS          [10] 🔄 REBOOT VPS"
+echo -e " [5] 🌐 WIREGUARD     [11] 🗑️ UNINSTALL"
+echo -e " [6] ⚡ UDP ZIVPN     [x] ❌ EXIT"
 
 echo -e "${RED}└─────────────────────────────────────────────┘${NC}"
 
@@ -240,6 +238,7 @@ case $menu in
     8) running ;;
     9) clearcache ;;
     10) reboot ;;
+    11) bash /root/uninstall.sh ;;
     x) exit ;;
     *)
         echo -e "${RED}❌ Invalid menu!${NC}"
