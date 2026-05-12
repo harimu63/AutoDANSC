@@ -135,7 +135,7 @@ cut -d':' -f2 | sort -u | wc -l)
 clear
 
 echo ""
-type_text $'\033[1;31m⚡ Booting ZNANDEV XRAY PANEL ⚡\033[0m' 0.03
+type_text $'\033[1;31m⚡ Loading ZNANDEV XRAY PANEL ⚡\033[0m' 0.03
 sleep 0.5
 
 loading "Loading System Modules"
