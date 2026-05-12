@@ -45,9 +45,8 @@ apt-get install -y \
 wget \
 curl \
 openssl \
-iptables \
 net-tools \
-ufw
+ufw >/dev/null 2>&1
 
 # ==============================
 # STOP OLD SERVICE
@@ -67,6 +66,24 @@ https://github.com/zahidbd2/udp-zivpn/releases/download/udp-zivpn_1.4.9/udp-zivp
 chmod +x /usr/local/bin/zivpn
 
 # ==============================
+# CHECK BINARY
+# ==============================
+
+if [[ ! -f /usr/local/bin/zivpn ]]; then
+    echo -e "${RED}Failed downloading binary!${NC}"
+    exit 1
+fi
+
+# ==============================
+# CHECK PORT
+# ==============================
+
+if ss -lunp | grep -q ":5667"; then
+    echo -e "${RED}Port 5667 already in use!${NC}"
+    exit 1
+fi
+
+# ==============================
 # CREATE DIRECTORY
 # ==============================
 
@@ -79,6 +96,9 @@ mkdir -p /etc/zivpn
 # ==============================
 
 touch /etc/zivpn/users.db
+
+# Default user
+echo "testuser" > /etc/zivpn/users.db
 
 # ==============================
 # GENERATE SSL CERTIFICATE
@@ -100,12 +120,18 @@ openssl req -new -newkey rsa:4096 \
 
 echo -e "${YELLOW}[*] Generating config...${NC}"
 
+USERS=$(awk '{print "\"" $1 "\""}' /etc/zivpn/users.db | paste -sd "," -)
+
 cat > /etc/zivpn/config.json <<EOF
 {
-  "listen": ":5666",
-  "certFile": "zivpn.crt",
-  "keyFile": "zivpn.key",
-  "config": []
+  "listen": ":5667",
+  "cert": "/etc/zivpn/zivpn.crt",
+  "key": "/etc/zivpn/zivpn.key",
+  "obfs": "zivpn",
+  "auth": {
+    "mode": "passwords",
+    "config": [ $USERS ]
+  }
 }
 EOF
 
@@ -134,42 +160,21 @@ echo -e "${YELLOW}[*] Creating service...${NC}"
 
 cat > /etc/systemd/system/zivpn.service <<EOF
 [Unit]
-Description=ZNAND UDP ZIVPN Service
+Description=zivpn VPN Server
 After=network.target
 
 [Service]
 Type=simple
 User=root
 WorkingDirectory=/etc/zivpn
-ExecStart=/usr/local/bin/zivpn -config /etc/zivpn/config.json server
+ExecStart=/usr/local/bin/zivpn server -c /etc/zivpn/config.json
 Restart=always
 RestartSec=3
-
-CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-NoNewPrivileges=true
+Environment=ZIVPN_LOG_LEVEL=info
 
 [Install]
 WantedBy=multi-user.target
 EOF
-
-# ==============================
-# IPTABLES RULE
-# ==============================
-
-echo -e "${YELLOW}[*] Setting iptables rules...${NC}"
-
-iptables -t nat -A PREROUTING \
--p udp --dport 20000:50000 \
--j REDIRECT --to-ports 5666
-
-# ==============================
-# SAVE IPTABLES
-# ==============================
-
-apt-get install -y iptables-persistent >/dev/null 2>&1
-
-netfilter-persistent save >/dev/null 2>&1
 
 # ==============================
 # OPEN FIREWALL
@@ -177,8 +182,9 @@ netfilter-persistent save >/dev/null 2>&1
 
 echo -e "${YELLOW}[*] Opening firewall...${NC}"
 
-ufw allow 20000:50000/udp >/dev/null 2>&1
-ufw allow 5666/udp >/dev/null 2>&1
+if command -v ufw >/dev/null 2>&1; then
+    ufw allow 5667/udp >/dev/null 2>&1
+fi
 
 # ==============================
 # ENABLE SERVICE
@@ -209,9 +215,9 @@ echo -e "${GREEN}      ZIVPN INSTALLED${NC}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
 echo -e " Service Status : $STATUS"
-echo -e " UDP Port       : 20000-50000"
-echo -e " Internal Port  : 5666"
+echo -e " UDP Port       : 5667"
 echo -e " Config Path    : /etc/zivpn/config.json"
 echo -e " Users DB       : /etc/zivpn/users.db"
+echo -e " Default User   : testuser"
 
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
