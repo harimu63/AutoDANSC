@@ -1,0 +1,39 @@
+#!/bin/bash
+
+clear
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "        UDP ZIVPN"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+echo "[1] Add User"
+echo "[2] Trial User"
+echo "[3] Renew User"
+echo "[4] Delete User"
+echo "[5] Check Member"
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+read -p "Select Menu : " opt
+
+case $opt in
+1)
+bash /root/AutoscriptXRAY/udp/add-zivpn.sh
+;;
+2)
+bash /root/AutoscriptXRAY/udp/trial-zivpn.sh
+;;
+3)
+bash /root/AutoscriptXRAY/udp/renew-zivpn.sh
+;;
+4)
+bash /root/AutoscriptXRAY/udp/del-zivpn.sh
+;;
+5)
+bash /root/AutoscriptXRAY/udp/cek-zivpn.sh
+;;
+*)
+echo "Invalid option!"
+;;
+esac
