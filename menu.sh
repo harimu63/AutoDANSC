@@ -122,7 +122,7 @@ TROJAN=$(jq '[.inbounds[] | select(.tag=="trojan-ws-tls").settings.clients[]] | 
 
 SSWS=$(jq '[.inbounds[] | select(.tag=="ssws-ws-tls").settings.clients[]] | length' $CONFIG 2>/dev/null)
 
-ZIVPN_USERS=$(cat /etc/zivpn/users.db 2>/dev/null | wc -l)
+ZIVPN_USER=$(grep -vc '^$' /etc/zivpn/users.db 2>/dev/null)
 
 TOTAL=$((VMESS + VLESS + TROJAN + SSWS + ZIVPN_USERS))
 
@@ -177,54 +177,54 @@ echo -e "${YELLOW}└───────────────────�
 
 echo -e "${CYAN}┌──────────────── BANDWIDTH ──────────────────┐${NC}"
 
-printf " ${WHITE}📅 TODAY${NC} : %-10s" "$TODAY"
-printf " ${WHITE}📆 YESTERDAY${NC} : %-10s\n" "$YESTERDAY"
+printf " ${WHITE}TODAY${NC} : %-10s" "$TODAY"
+printf " ${WHITE}YESTERDAY${NC} : %-10s\n" "$YESTERDAY"
 
-printf " ${WHITE}🗓  MONTH${NC} : %-10s" "$MONTH"
-printf " ${WHITE}💾 TOTAL${NC} : %-10s\n" "$TOTAL_BW"
+printf " ${WHITE}MONTH${NC} : %-10s" "$MONTH"
+printf " ${WHITE}TOTAL${NC} : %-10s\n" "$TOTAL_BW"
 
 echo -e "${CYAN}└─────────────────────────────────────────────┘${NC}"
 
-# ================= USER =================
+# ====================== USER ==================
 
-echo -e "${GREEN}┌──────────────── XRAY USER ──────────────────┐${NC}"
+echo -e "${CYAN}┌──────────────── USER STATS ─────────────────┐${NC}"
 
-printf " ${WHITE}🚀 VMESS${NC}: %-4s" "$VMESS"
-printf " ${WHITE}🧬 VLESS${NC}: %-4s" "$VLESS"
-printf " ${WHITE}🛡  TROJAN${NC}: %-4s\n" "$TROJAN"
+echo -e " ${WHITE}VMESS${NC} : $VMESS     ${WHITE}VLESS${NC} : $VLESS     ${WHITE}TROJAN${NC} : $TROJAN"
 
-printf " ${WHITE}🔒 SSWS${NC} : %-4s" "$SSWS"
-printf " ${WHITE}⚡ ZIVPN${NC}: %-4s" "$ZIVPN_USERS"
-printf " ${WHITE}👤 TOTAL${NC}: %-4s\n" "$TOTAL"
+echo -e " ${WHITE}SSWS${NC}  : $SSWS     ${WHITE}ZIVPN${NC} : $ZIVPN_USER     ${WHITE}TOTAL${NC}  : $TOTAL"
 
-printf "               ${WHITE} 🌐ONLINE${NC}: %-3s\n" "$ONLINE"
+echo -e "                 ${WHITE}ONLINE${NC} : $ONLINE"
 
-echo -e "${GREEN}└─────────────────────────────────────────────┘${NC}"
+echo -e "${CYAN}└─────────────────────────────────────────────┘${NC}"
 
 # ================= SERVICE =================
 
 echo -e "${BLUE}┌──────────────── SERVICE ────────────────────┐${NC}"
 
-printf " ${WHITE}🚀 XRAY${NC}      : %-18b" "$XRAY"
-printf " ${WHITE}🌐 NGINX${NC} : %-18b\n" "$NGINX"
+printf " ${WHITE}XRAY${NC}      : %-18b" "$XRAY"
+printf " ${WHITE}NGINX${NC} : %-18b\n" "$NGINX"
 
-printf " ${WHITE}🛡  Wireguard${NC} : %-18b" "$WG"
-printf " ${WHITE}⚡ ZIVPN${NC} : %-18b\n" "$ZIVPN"
+printf " ${WHITE}WIREGUARD${NC} : %-18b" "$WG"
+printf " ${WHITE}ZIVPN${NC} : %-18b\n" "$ZIVPN"
 
 echo -e "${BLUE}└─────────────────────────────────────────────┘${NC}"
 
 echo -e "${RED}┌──────────────── MAIN MENU ──────────────────┐${NC}"
 
-echo -e " [1] 🚀 VMESS        [7] 🧰 TOOLS"
-echo -e " [2] 🧬 VLESS        [8] 📊 STATUS"
-echo -e " [3] 🛡  TROJAN       [9] 🧹 CLEAR RAM"
-echo -e " [4] 🔒 SSWS         [10] 🔄 REBOOT VPS"
-echo -e " [5] 🌐 WIREGUARD    [11] 🗑️ UNINSTALL"
-echo -e " [6] ⚡ UDP ZIVPN    [x] ❌ EXIT"
+echo -e " [1] ${WHITE}VMESS${NC}        [7] ${WHITE}TOOLS${NC}"
+echo -e " [2] ${WHITE}VLESS${NC}        [8] ${WHITE}STATUS${NC}"
+echo -e " [3] ${WHITE}TROJAN${NC}       [9] ${WHITE}CLEAR RAM${NC}"
+echo -e " [4] ${WHITE}SSWS${NC}         [10] ${WHITE}REBOOT VPS${NC}"
+echo -e " [5] ${WHITE}WIREGUARD${NC}    [11] ${WHITE}UNINSTALL${NC}"
+echo -e " [6] ${WHITE}UDP ZIVPN${NC}    [x] ${WHITE}EXIT${NC}"
 
 echo -e "${RED}└─────────────────────────────────────────────┘${NC}"
 
-echo ""
+echo -e "${RED}┌──────────────── LICENSE ────────────────────┐${NC}"
+echo -e " ${WHITE}License${NC} : ZNDEV-ULTIMATE-2026"
+echo -e " ${WHITE}Type${NC}    : Lifetime Premium"
+echo -e "${RED}└─────────────────────────────────────────────┘${NC}"
+
 read -rp "Select Menu : " menu
 
 case $menu in
