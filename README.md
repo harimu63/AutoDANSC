@@ -18,8 +18,7 @@ Script modular dan interaktif untuk install protokol VPN lengkap dengan panel: *
 ---
 ## Screenshot
 
-<video src="https://github.com/znandev/AutoscriptXRAY/img/video1.mp4 controls width="700"></video>
-![img1](./img/screenshot01.png)
+<video src="https://raw.githubusercontent.com/znandev/AutoscriptXRAY/main/img/video1.mp4" controls width="700"></video>
 
 Untuk membuka menu
 ```bash
