@@ -118,6 +118,7 @@ python3-pip \
 iptables \
 iptables-persistent \
 netfilter-persistent \
+vnstat \
 openssl \
 ufw >/dev/null 2>&1
 
