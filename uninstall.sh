@@ -1,7 +1,10 @@
 #!/bin/bash
+
 # Uninstall Script - AutoscriptXRAY by znandev
 
-# ================= WARNA =================
+set -e
+
+# ================= COLOR =================
 
 RED='\033[1;31m'
 GREEN='\033[0;32m'
@@ -9,36 +12,42 @@ YELLOW='\033[1;33m'
 CYAN='\033[1;36m'
 NC='\033[0m'
 
+BASE_DIR="/root/AutoscriptXRAY"
+
 # ================= CHECK ROOT =================
 
 if [[ $EUID -ne 0 ]]; then
-    echo -e "${RED}[ERROR] Jalankan script sebagai root!${NC}"
-    exit 1
+echo -e "${RED}[ERROR] Jalankan script sebagai root!${NC}"
+exit 1
 fi
 
 # ================= FUNCTION =================
 
 confirm() {
-    read -rp "❗ Yakin ingin menghapus semua layanan AutoscriptXRAY? [y/N]: " confirm
-    [[ "$confirm" =~ ^[Yy]$ ]] || {
-        echo -e "${YELLOW}Batal uninstall.${NC}"
-        exit 1
-    }
+read -rp "❗ Yakin ingin menghapus semua layanan AutoscriptXRAY? [y/N]: " confirm
+
+```
+[[ "$confirm" =~ ^[Yy]$ ]] || {
+    echo -e "${YELLOW}Batal uninstall.${NC}"
+    exit 1
+}
+```
+
 }
 
 info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
+echo -e "${GREEN}[INFO]${NC} $1"
 }
 
 warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
+echo -e "${YELLOW}[WARN]${NC} $1"
 }
 
 err() {
-    echo -e "${RED}[ERROR]${NC} $1"
+echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# ================= MULAI =================
+# ================= START =================
 
 confirm
 
@@ -48,101 +57,130 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${YELLOW}🚮 UNINSTALL AUTOSCRIPTXRAY${NC}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-# ================= STOP SERVICE =================
+# ================= STOP SERVICES =================
 
 services=(
-    xray
-    sshws
-    stunnel4
-    dropbear
-    wg-quick@wg0
-    zivpn
+nginx
+xray
+ssh
+dropbear
+ws-dropbear
+ws-stunnel
+udp-custom
+udpgw
+stunnel4
+wg-quick@wg0
+zivpn
 )
 
 for svc in "${services[@]}"; do
-    if systemctl list-unit-files | grep -q "^${svc}"; then
-        info "Stopping service: $svc"
-        systemctl stop "$svc" >/dev/null 2>&1
-        systemctl disable "$svc" >/dev/null 2>&1
-    fi
+if systemctl list-unit-files | grep -q "^${svc}"; then
+info "Stopping service: $svc"
+
+```
+    systemctl stop "$svc" >/dev/null 2>&1 || true
+    systemctl disable "$svc" >/dev/null 2>&1 || true
+fi
+```
+
 done
 
 # ================= REMOVE SYSTEMD =================
 
-info "Menghapus systemd service..."
+info "Removing systemd services..."
 
 rm -f /etc/systemd/system/xray.service
-rm -f /etc/systemd/system/sshws.service
+rm -f /etc/systemd/system/dropbear.service
+rm -f /etc/systemd/system/ws-dropbear.service
+rm -f /etc/systemd/system/ws-stunnel.service
+rm -f /etc/systemd/system/udp-custom.service
+rm -f /etc/systemd/system/udpgw.service
 rm -f /etc/systemd/system/zivpn.service
 
 rm -f /etc/systemd/system/acme*.service
 rm -f /etc/systemd/system/acme*.timer
 
 systemctl daemon-reload
+systemctl daemon-reexec
 
-# ================= REMOVE XRAY =================
+# ================= REMOVE BINARIES =================
 
-info "Menghapus binary Xray..."
+info "Removing binaries..."
 
 rm -f /usr/local/bin/xray
-
-# ================= REMOVE ZIVPN =================
-
-info "Menghapus binary ZIVPN..."
-
+rm -f /usr/local/bin/ws-dropbear
+rm -f /usr/local/bin/ws-stunnel
+rm -f /usr/local/bin/udp-custom
+rm -f /usr/local/bin/badvpn-udpgw
 rm -f /usr/local/bin/zivpn
 
 # ================= REMOVE CONFIG =================
 
-info "Menghapus konfigurasi..."
+info "Removing configurations..."
 
 rm -rf /etc/xray
 rm -rf /etc/v2ray
 rm -rf /etc/zivpn
+rm -rf /etc/wireguard
 rm -rf /etc/autoscriptvpn
 
-rm -f /etc/xray/private.key
-rm -f /etc/xray/cert.crt
+rm -f /etc/nginx/conf.d/xray.conf
+rm -f /etc/nginx/nginx.conf
+
+rm -f /etc/default/dropbear
+rm -f /etc/issue.net
+
+rm -f /etc/profile.d/no-login.sh
 
 rm -f /root/domain
 rm -f /root/scdomain
 rm -f /root/log-install.txt
 rm -f /etc/log-create-ssh.log
 
-# ================= REMOVE MENU =================
+# ================= REMOVE MENUS =================
 
-info "Menghapus menu dan script..."
+info "Removing menu commands..."
 
 binaries=(
-    menu
-    m-vmess
-    m-vless
-    m-trojan
-    m-ssws
-    m-wg
-    m-zivpn
-    tools-menu
-    backup.sh
-    speedtest.sh
-    domain.sh
-    running.sh
+menu
+
+```
+m-ssh
+addsh
+
+m-vmess
+m-vless
+m-trojan
+m-ssws
+
+m-wg
+
+m-zivpn
+
+tools-menu
+backup.sh
+speedtest.sh
+domain.sh
+running.sh
+```
+
 )
 
 for bin in "${binaries[@]}"; do
-    rm -f "/usr/bin/$bin"
+rm -f "/usr/bin/$bin"
 done
 
-# ================= REMOVE USER TRIAL =================
+# ================= REMOVE TRIAL USERS =================
 
-info "Menghapus user trial..."
+info "Removing trial users..."
 
 awk -F: '/^trial/ {print $1}' /etc/passwd | while read -r user; do
-    userdel -f "$user" >/dev/null 2>&1
+userdel -f "$user" >/dev/null 2>&1 || true
 done
 
 # ================= REMOVE CRON =================
 
-info "Membersihkan cron autoscript..."
+info "Cleaning cron jobs..."
 
 rm -f /etc/cron.d/xray
 rm -f /etc/cron.d/autoscript
@@ -150,36 +188,55 @@ rm -f /etc/cron.d/autoscript
 # ================= REMOVE ACME =================
 
 if [[ -d ~/.acme.sh ]]; then
-    info "Menghapus acme.sh..."
-    rm -rf ~/.acme.sh
+info "Removing acme.sh..."
+rm -rf ~/.acme.sh
 fi
+
+# ================= REMOVE PACKAGES =================
+
+warn "Removing packages..."
+
+apt remove -y 
+nginx 
+dropbear 
+stunnel4 
+wireguard 
+wireguard-tools 
+qrencode || true
+
+apt autoremove -y
 
 # ================= CLEAN TEMP =================
 
-warn "Membersihkan file temporary..."
+warn "Cleaning temporary files..."
 
 rm -rf /tmp/xray
+rm -rf /tmp/badvpn
 rm -f /tmp/xray.zip
 
 # ================= REMOVE SOURCE =================
 
-info "Menghapus source AutoscriptXRAY..."
+info "Removing AutoscriptXRAY source..."
 
-rm -rf ~/AutoscriptXRAY
+rm -rf "$BASE_DIR"
 
 # ================= FINISH =================
 
 clear
 
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${GREEN}✅ AUTOSCRIPTXRAY BERHASIL DIHAPUS${NC}"
+echo -e "${GREEN}✅ AUTOSCRIPTXRAY REMOVED${NC}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
 echo ""
-echo -e " XRAY       : REMOVED"
-echo -e " WireGuard  : REMOVED"
-echo -e " UDP ZIVPN  : REMOVED"
+echo -e " NGINX       : REMOVED"
+echo -e " XRAY        : REMOVED"
+echo -e " SSH WS      : REMOVED"
+echo -e " WireGuard   : REMOVED"
+echo -e " UDP CUSTOM  : REMOVED"
+echo -e " UDPGW       : REMOVED"
+echo -e " UDP ZIVPN   : REMOVED"
 
 echo ""
-echo -e "${YELLOW}💡 Disarankan reboot VPS:${NC} reboot"
+echo -e "${YELLOW}💡 Recommended reboot:${NC} reboot"
 echo ""
