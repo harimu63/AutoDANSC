@@ -1,6 +1,9 @@
 #!/bin/bash
+
 # ==========================================
+
 # ZNANDEV XRAY PANEL
+
 # ==========================================
 
 # ================= COLOR =================
@@ -19,28 +22,34 @@ LOG="/var/log/xray/access.log"
 # ================= ANIMATION =================
 
 loading() {
-    local text="$1"
+local text="$1"
 
-    echo -ne "${CYAN}➜ ${text}${NC}"
+```
+echo -ne "${CYAN}➜ ${text}${NC}"
 
-    for i in {1..3}; do
-        echo -ne "."
-        sleep 0.35
-    done
+for i in {1..3}; do
+    echo -ne "."
+    sleep 0.35
+done
 
-    echo ""
+echo ""
+```
+
 }
 
 type_text() {
-    local text="$1"
-    local delay="${2:-0.02}"
+local text="$1"
+local delay="${2:-0.02}"
 
-    while IFS= read -r -n1 char; do
-        printf "%b" "$char"
-        sleep "$delay"
-    done <<< "$text"
+```
+while IFS= read -r -n1 char; do
+    printf "%b" "$char"
+    sleep "$delay"
+done <<< "$text"
 
-    echo ""
+echo ""
+```
+
 }
 
 # ================= SYSTEM INFO =================
@@ -61,7 +70,8 @@ RAM=$(free -m | awk 'NR==2{printf "%sMB / %sMB",$3,$2}')
 
 DISK=$(df -h / | awk 'NR==2{print $3 "/" $2}')
 
-# ================= NETWORK ===============
+# ================= NETWORK =================
+
 IFACE=$(ip route get 1.1.1.1 | awk '{print $5; exit}')
 
 MONTH_NAME=$(date +"%Y-%m")
@@ -74,42 +84,51 @@ MONTH=$(vnstat -i $IFACE | awk -v m="$MONTH_NAME" '
 $1 ~ m {print $8" "$9}
 ')
 
-TOTAL_BW=$(vnstat --oneline | cut -d\; -f15)
+TOTAL_BW=$(vnstat --oneline | cut -d; -f15)
 
 [[ -z "$YESTERDAY" ]] && YESTERDAY="0 B"
 [[ -z "$TOTAL_BW" ]] && TOTAL_BW="0 B"
+
 # ================= STATUS =================
 
 XRAY=$(systemctl is-active xray)
 
 if [[ $XRAY == "active" ]]; then
-    XRAY="${GREEN}🟢 ONLINE${NC}"
+XRAY="${GREEN}🟢 ONLINE${NC}"
 else
-    XRAY="${RED}🔴 OFFLINE${NC}"
+XRAY="${RED}🔴 OFFLINE${NC}"
 fi
 
 NGINX=$(systemctl is-active nginx)
 
 if [[ $NGINX == "active" ]]; then
-    NGINX="${GREEN}🟢 ONLINE${NC}"
+NGINX="${GREEN}🟢 ONLINE${NC}"
 else
-    NGINX="${RED}🔴 OFFLINE${NC}"
+NGINX="${RED}🔴 OFFLINE${NC}"
 fi
 
 WG=$(systemctl is-active wg-quick@wg0)
 
 if [[ $WG == "active" ]]; then
-    WG="${GREEN}🟢 ONLINE${NC}"
+WG="${GREEN}🟢 ONLINE${NC}"
 else
-    WG="${RED}🔴 OFFLINE${NC}"
+WG="${RED}🔴 OFFLINE${NC}"
 fi
 
 ZIVPN=$(systemctl is-active zivpn)
 
 if [[ $ZIVPN == "active" ]]; then
-    ZIVPN="${GREEN}🟢 ONLINE${NC}"
+ZIVPN="${GREEN}🟢 ONLINE${NC}"
 else
-    ZIVPN="${RED}🔴 OFFLINE${NC}"
+ZIVPN="${RED}🔴 OFFLINE${NC}"
+fi
+
+SSHWS=$(systemctl is-active ws-dropbear)
+
+if [[ $SSHWS == "active" ]]; then
+SSHWS="${GREEN}🟢 ONLINE${NC}"
+else
+SSHWS="${RED}🔴 OFFLINE${NC}"
 fi
 
 # ================= USER COUNT =================
@@ -124,10 +143,12 @@ SSWS=$(jq '[.inbounds[] | select(.tag=="ssws-ws-tls").settings.clients[]] | leng
 
 ZIVPN_USER=$(grep -vc '^$' /etc/zivpn/users.db 2>/dev/null)
 
-TOTAL=$((VMESS + VLESS + TROJAN + SSWS + ZIVPN_USERS))
+SSH_USER=$(awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd | wc -l)
 
-ONLINE=$(tail -n 500 /var/log/xray/access.log 2>/dev/null | \
-grep -Eo 'tcp:[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | \
+TOTAL=$((VMESS + VLESS + TROJAN + SSWS + ZIVPN_USER + SSH_USER))
+
+ONLINE=$(tail -n 500 /var/log/xray/access.log 2>/dev/null | 
+grep -Eo 'tcp:[0-9]+.[0-9]+.[0-9]+.[0-9]+' | 
 cut -d':' -f2 | sort -u | wc -l)
 
 # ===== INIT =====
@@ -143,6 +164,7 @@ loading "Checking NGINX Service"
 loading "Checking XRAY Service"
 loading "Checking WireGuard Service"
 loading "Checking UDP Tunnel"
+loading "Checking SSH WebSocket"
 loading "Reading Traffic Database"
 
 echo ""
@@ -185,15 +207,15 @@ printf " ${WHITE}TOTAL${NC} : %-10s\n" "$TOTAL_BW"
 
 echo -e "${CYAN}└─────────────────────────────────────────────┘${NC}"
 
-# ====================== USER ==================
+# ================= USER ==================
 
 echo -e "${CYAN}┌──────────────── USER STATS ─────────────────┐${NC}"
 
 echo -e " ${WHITE}VMESS${NC} : $VMESS     ${WHITE}VLESS${NC} : $VLESS     ${WHITE}TROJAN${NC} : $TROJAN"
 
-echo -e " ${WHITE}SSWS${NC}  : $SSWS     ${WHITE}ZIVPN${NC} : $ZIVPN_USER     ${WHITE}TOTAL${NC}  : $TOTAL"
+echo -e " ${WHITE}SSWS${NC}  : $SSWS     ${WHITE}SSH${NC}   : $SSH_USER     ${WHITE}ZIVPN${NC} : $ZIVPN_USER"
 
-echo -e "                 ${WHITE}ONLINE${NC} : $ONLINE"
+echo -e " ${WHITE}TOTAL${NC} : $TOTAL    ${WHITE}ONLINE${NC} : $ONLINE"
 
 echo -e "${CYAN}└─────────────────────────────────────────────┘${NC}"
 
@@ -207,16 +229,21 @@ printf " ${WHITE}NGINX${NC} : %-18b\n" "$NGINX"
 printf " ${WHITE}WIREGUARD${NC} : %-18b" "$WG"
 printf " ${WHITE}ZIVPN${NC} : %-18b\n" "$ZIVPN"
 
+printf " ${WHITE}SSH${NC}    : %-18b\n" "$SSHWS"
+
 echo -e "${BLUE}└─────────────────────────────────────────────┘${NC}"
+
+# ================= MENU =================
 
 echo -e "${RED}┌──────────────── MAIN MENU ──────────────────┐${NC}"
 
-echo -e " [1] ${WHITE}VMESS${NC}        [7] ${WHITE}TOOLS${NC}"
-echo -e " [2] ${WHITE}VLESS${NC}        [8] ${WHITE}STATUS${NC}"
-echo -e " [3] ${WHITE}TROJAN${NC}       [9] ${WHITE}CLEAR RAM${NC}"
-echo -e " [4] ${WHITE}SSWS${NC}         [10] ${WHITE}REBOOT VPS${NC}"
-echo -e " [5] ${WHITE}WIREGUARD${NC}    [11] ${WHITE}UNINSTALL${NC}"
-echo -e " [6] ${WHITE}UDP ZIVPN${NC}    [x] ${WHITE}EXIT${NC}"
+echo -e " [1] ${WHITE}SSH${NC}          [8] ${WHITE}TOOLS${NC}"
+echo -e " [2] ${WHITE}VMESS${NC}        [9] ${WHITE}STATUS${NC}"
+echo -e " [3] ${WHITE}VLESS${NC}        [10] ${WHITE}CLEAR RAM${NC}"
+echo -e " [4] ${WHITE}TROJAN${NC}       [11] ${WHITE}REBOOT VPS${NC}"
+echo -e " [5] ${WHITE}SSWS${NC}         [12] ${WHITE}UNINSTALL${NC}"
+echo -e " [6] ${WHITE}WIREGUARD${NC}    [13] ${WHITE}UDP CUSTOM${NC}"
+echo -e " [7] ${WHITE}UDP ZIVPN${NC}    [x] ${WHITE}EXIT${NC}"
 
 echo -e "${RED}└─────────────────────────────────────────────┘${NC}"
 
@@ -228,21 +255,23 @@ echo -e "${RED}└────────────────────�
 read -rp "Select Menu : " menu
 
 case $menu in
-    1) m-vmess ;;
-    2) m-vless ;;
-    3) m-trojan ;;
-    4) m-ssws ;;
-    5) m-wg ;;
-    6) m-zivpn ;;
-    7) tools-menu ;;
-    8) running ;;
-    9) clearcache ;;
-    10) reboot ;;
-    11) bash /root/uninstall.sh ;;
-    x) exit ;;
-    *)
-        echo -e "${RED}❌ Invalid menu!${NC}"
-        sleep 1
-        exec "$0"
-    ;;
+1) m-ssh ;;
+2) m-vmess ;;
+3) m-vless ;;
+4) m-trojan ;;
+5) m-ssws ;;
+6) m-wg ;;
+7) m-zivpn ;;
+8) tools-menu ;;
+9) running ;;
+10) clearcache ;;
+11) reboot ;;
+12) bash /root/uninstall.sh ;;
+13) systemctl status udp-custom ;;
+x) exit ;;
+*)
+echo -e "${RED}❌ Invalid menu!${NC}"
+sleep 1
+exec "$0"
+;;
 esac
