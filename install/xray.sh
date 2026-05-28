@@ -1,16 +1,35 @@
 #!/bin/bash
+
 # Setup Xray Core + Nginx Reverse Proxy - by znandev
+
 set -e
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
-BASE_DIR="/root/AutoscriptXRAY"
 
 clear
 
-echo -e "${GREEN}▶️ Memulai instalasi Xray-core...${NC}"
+echo -e "${GREEN}▶️ Installing Xray Core...${NC}"
 sleep 1
+
+# ================= VALIDATION =================
+
+if ! command -v nginx >/dev/null 2>&1; then
+echo -e "${RED}[ERROR] NGINX not installed!${NC}"
+echo -e "${RED}Run install/nginx.sh first${NC}"
+exit 1
+fi
+
+if [[ ! -f ~/AutoscriptXRAY/config/xray.json ]]; then
+echo -e "${RED}[ERROR] xray.json not found!${NC}"
+exit 1
+fi
+
+if [[ ! -f ~/AutoscriptXRAY/config/xray.conf ]]; then
+echo -e "${RED}[ERROR] xray.conf not found!${NC}"
+exit 1
+fi
 
 # ================= INSTALL DEPENDENCY =================
 
@@ -18,7 +37,7 @@ apt update -y
 
 apt install -y \
 curl wget socat cron jq unzip \
-gnupg coreutils lsof qrencode \
+gnupg coreutils lsof nginx qrencode \
 ca-certificates
 
 mkdir -p /etc/xray
@@ -27,40 +46,35 @@ mkdir -p /usr/local/bin
 
 # ================= DOWNLOAD XRAY =================
 
-echo -e "${GREEN}⬇️ Download Xray-core...${NC}"
+echo -e "${GREEN}⬇️ Downloading Xray Core...${NC}"
 
 mkdir -p /tmp/xray
 
-wget -q -O /tmp/xray.zip \
+wget -q -O /tmp/xray.zip 
 https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip
 
 unzip -o /tmp/xray.zip -d /tmp/xray
 
 install -m 755 /tmp/xray/xray /usr/local/bin/xray
 
-rm -rf /tmp/xray /tmp/xray.zip
+rm -rf /tmp/xray
+rm -f /tmp/xray.zip
 
 # ================= DOMAIN =================
 
 if [[ -f /root/domain ]]; then
-    domain=$(cat /root/domain)
+domain=$(cat /root/domain)
 else
-    echo -e "${RED}[ERROR] File /root/domain tidak ditemukan!${NC}"
-    exit 1
+echo -e "${RED}[ERROR] File /root/domain not found!${NC}"
+exit 1
 fi
 
-mkdir -p /etc/xray
-echo "${domain}" > /etc/xray/domain
+echo "$domain" > /etc/xray/domain
 
-# ================= DEPENDENCY =================
-
-echo -e "${GREEN}📦 Install dependency...${NC}"
-
-apt update -y
-apt install -y curl socat cron unzip
+# ================= ENABLE CRON =================
 
 systemctl enable cron
-systemctl start cron
+systemctl restart cron
 
 # ================= INSTALL ACME =================
 
@@ -77,48 +91,35 @@ chmod +x ~/.acme.sh/acme.sh
 ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
 
 ~/.acme.sh/acme.sh --register-account -m admin@$domain
+# ================= STOP PORT 80 =================
 
-# ================= VALIDATION NGINX ========
-if ! command -v nginx >/dev/null 2>&1; then
-    echo -e "${RED}[ERROR] NGINX not installed!${NC}"
-    echo -e "${RED}Run install/nginx.sh first${NC}"
-    exit 1
-fi
+echo -e "${GREEN}🛑 Freeing Port 80...${NC}"
 
-# ================= STOP SERVICE =================
+systemctl stop nginx 2>/dev/null || true
+systemctl stop apache2 2>/dev/null || true
 
-echo -e "${GREEN}🛑 Stop service yang memakai port 80...${NC}"
-
-systemctl stop nginx 2>/dev/null
-systemctl stop apache2 2>/dev/null
-
-fuser -k 80/tcp >/dev/null 2>&1
+fuser -k 80/tcp >/dev/null 2>&1 || true
 
 # ================= ISSUE CERT =================
 
-echo -e "${GREEN}🚀 Issue SSL Certificate...${NC}"
+echo -e "${GREEN}🚀 Issuing SSL Certificate...${NC}"
 
-~/.acme.sh/acme.sh \
---issue \
--d $domain \
---standalone \
---keylength ec-256 \
+~/.acme.sh/acme.sh 
+--issue 
+-d "$domain" 
+--standalone 
+--keylength ec-256 
 --force
-
-if [[ $? != 0 ]]; then
-    echo -e "${RED}❌ Gagal issue certificate!${NC}"
-    exit 1
-fi
 
 # ================= INSTALL CERT =================
 
 mkdir -p /etc/xray
 
-~/.acme.sh/acme.sh \
---install-cert \
--d $domain \
---ecc \
---key-file /etc/xray/private.key \
+~/.acme.sh/acme.sh 
+--install-cert 
+-d "$domain" 
+--ecc 
+--key-file /etc/xray/private.key 
 --fullchain-file /etc/xray/cert.crt
 
 # ================= PERMISSION =================
@@ -126,30 +127,18 @@ mkdir -p /etc/xray
 chmod 600 /etc/xray/private.key
 chmod 644 /etc/xray/cert.crt
 
-# ================= RESTART SERVICE =================
-
-systemctl restart nginx 2>/dev/null
-
-
-echo -e "${GREEN}✅ Certificate berhasil dibuat untuk ${domain}${NC}"
 # ================= XRAY CONFIG =================
 
-if [[ ! -f "$BASE_DIR/config/xray.json" ]]; then
-    echo -e "${RED}[ERROR] xray.json not found!${NC}"
-    exit 1
-fi
+cp ~/AutoscriptXRAY/config/xray.json 
+/etc/xray/config.json
 
-if [[ ! -f "$BASE_DIR/config/xray.conf" ]]; then
-    echo -e "${RED}[ERROR] xray.conf not found!${NC}"
-    exit 1
-fi
+cp ~/AutoscriptXRAY/config/xray.conf 
+/etc/nginx/conf.d/xray.conf
 
-mkdir -p /etc/xray
-cp $BASE_DIR/config/xray.json /etc/xray/config.json
-
-chmod 644 /etc/nginx/conf.d/xray.conf
 chmod 644 /etc/xray/config.json
-# ================= SYSTEMD =================
+chmod 644 /etc/nginx/conf.d/xray.conf
+
+# ================= XRAY SERVICE =================
 
 cat > /etc/systemd/system/xray.service <<EOF
 [Unit]
@@ -167,13 +156,9 @@ Restart=on-failure
 WantedBy=multi-user.target
 EOF
 
-# ================= XRAY NGINX REVERSE PROXY ================
-
-cp $BASE_DIR/config/xray.conf /etc/nginx/conf.d/xray.conf
-
 # ================= TEST CONFIG =================
 
-echo -e "${GREEN}🧪 Testing config...${NC}"
+echo -e "${GREEN}🧪 Testing Config...${NC}"
 
 nginx -t || exit 1
 
@@ -188,9 +173,15 @@ systemctl enable xray
 systemctl restart xray
 
 systemctl restart nginx
+
 # ================= INSTALL LOG =================
 
-cat >> /root/log-install.txt <<LOGEOF
+cat >> /root/log-install.txt <<EOF
+
+━━━━━━━━━━━━━━━━━━━━━━
+XRAY PANEL
+━━━━━━━━━━━━━━━━━━━━━━
+
 XRAY VMess TLS      : 443
 XRAY VMess None TLS : 80
 XRAY VMess gRPC     : 443
@@ -203,18 +194,25 @@ XRAY Trojan TLS     : 443
 XRAY Trojan gRPC    : 443
 
 XRAY SS WS TLS      : 443
-XRAY SS WS none TLS : 80
+XRAY SS WS None TLS : 80
 XRAY SS WS gRPC     : 443
-LOGEOF
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+EOF
 
 # ================= DONE =================
+
+clear
 
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${GREEN}✅ XRAY INSTALLED SUCCESSFULLY${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
 echo -e "Domain        : ${domain}"
 echo -e "XRAY Config   : /etc/xray/config.json"
-echo -e "Nginx Config  : /etc/nginx/conf.d/xray.conf"
-echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo -e "NGINX Config  : /etc/nginx/conf.d/xray.conf"
+
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
