@@ -1,138 +1,268 @@
+# Autoscript XRAY
 
-# Autoscript XRAY 
+AutoScript VPN all-in-one
 
-AutoScript VPN all-in-one 
-Script modular dan interaktif untuk install protokol VPN lengkap dengan panel: **XRAY (VMess, VLess, Trojan, Shadowsocks), WireGuard**, dan berbagai tools DevOps + monitoring.
+Script modular dan interaktif untuk deploy:
 
----
-## Fitur Utama
+* SSH Websocket
+* XRAY Core
+* WireGuard
+* UDP Tunnel
+* Monitoring & Tools
 
-- XRAY: Vmess, Vless, Trojan, Shadowsocks (WS + TLS)
-- WireGuard VPN
-- Installer WebSocket custom
-- Menu interaktif per protokol
-- Tools tambahan: Backup, Domain, Speedtest
-- Setup domain random/manual
-- Friendly UI dengan panel interaktif
+Dengan panel terminal interaktif modern dan struktur modular production-ready.
 
 ---
-## Screenshot
 
-Untuk membuka menu
+# Features
+
+## SSH Websocket
+
+* OpenSSH
+* Dropbear 2019.78
+* SSH WS
+* SSH SSL WS
+* Enhanced Payload Support
+* UDP Custom Support
+* BadVPN UDPGW
+
+## XRAY Core
+
+* VMess WS + TLS
+* VLESS WS + TLS
+* Trojan WS + TLS
+* Shadowsocks WS
+* gRPC Support
+* NGINX Reverse Proxy
+* Auto SSL Certificate
+
+## WireGuard
+
+* WireGuard VPN
+* Client Generator
+* QRCode Support
+
+## UDP Tunnel
+
+* UDP Custom
+* ZIVPN UDP
+* BadVPN UDPGW
+
+## Tools
+
+* Backup Menu
+* Domain Menu
+* Speedtest
+* Running Service Checker
+* Traffic Monitor
+
+## UI
+
+* Interactive Terminal Panel
+* Colored Menu
+* Real-time Service Status
+* User Statistics
+* Traffic Statistics
+
+---
+
+# Screenshot
+
+Open menu:
+
 ```bash
-sudo menu
+menu
 ```
 
-
 ---
-## Quick Install
-```bash
-# 1. Install dependensi dasar
-apt update -y && apt upgrade -y && apt install git curl screen sudo -y
 
-# 2. Disable IPv6
+# Quick Install
+
+## 1️⃣ Install basic dependencies
+
+```bash
+apt update -y && apt upgrade -y
+apt install git curl screen sudo -y
+```
+
+## 2️⃣ Disable IPv6
+
+```bash
 sysctl -w net.ipv6.conf.all.disable_ipv6=1
 sysctl -w net.ipv6.conf.default.disable_ipv6=1
-
-# 3. Clone repo dari GitHub
-git clone https://github.com/znandev/AutoscriptXRAY.git
-cd AutoscriptXRAY
-
-# 4. Jalankan installer via screen
-chmod +x setup.sh
-chmod +x uninstall.sh
-screen -S setup ./setup.sh
-```
----
-## Catatan
-> ⚠️Jika client susah konek, silakan cek listening port tidak conflict dan nameserver pastikan tidak overwrite.
-```
-ss -tulpn | grep "127.0.0.1"
-sudo lsof -i :443,80
-```
-```
-tcp   LISTEN 0      4096              127.0.0.1:24456      0.0.0.0:*    users:(("xray",pid=1259,fd=13))                        
-tcp   LISTEN 0      4096              127.0.0.1:23456      0.0.0.0:*    users:(("xray",pid=1259,fd=8))                         
-tcp   LISTEN 0      4096              127.0.0.1:23457      0.0.0.0:*    users:(("xray",pid=1259,fd=9))                         
-tcp   LISTEN 0      4096              127.0.0.1:25432      0.0.0.0:*    users:(("xray",pid=1259,fd=10))                        
-tcp   LISTEN 0      4096              127.0.0.1:33456      0.0.0.0:*    users:(("xray",pid=1259,fd=12))                        
-tcp   LISTEN 0      4096              127.0.0.1:14016      0.0.0.0:*    users:(("xray",pid=1259,fd=11))                        
-tcp   LISTEN 0      4096              127.0.0.1:14017      0.0.0.0:*    users:(("xray",pid=1259,fd=3))                         
-tcp   LISTEN 0      4096              127.0.0.1:31234      0.0.0.0:*    users:(("xray",pid=1259,fd=15))                        
-tcp   LISTEN 0      4096              127.0.0.1:30300      0.0.0.0:*    users:(("xray",pid=1259,fd=6))                         
-tcp   LISTEN 0      4096              127.0.0.1:30301      0.0.0.0:*    users:(("xray",pid=1259,fd=7))                         
-tcp   LISTEN 0      4096              127.0.0.1:30310      0.0.0.0:*    users:(("xray",pid=1259,fd=14))                        
-tcp   LISTEN 0      20                127.0.0.1:25         0.0.0.0:*    users:(("exim4",pid=715,fd=4))
-```
-```
-COMMAND  PID     USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
-nginx   1075     root    5u  IPv4  18490      0t0  TCP *:http (LISTEN)
-nginx   1075     root    6u  IPv6  18491      0t0  TCP *:http (LISTEN)
-nginx   1075     root    7u  IPv4  18492      0t0  TCP *:https (LISTEN)
-nginx   1075     root    8u  IPv6  18493      0t0  TCP *:https (LISTEN)
-nginx   1076 www-data    5u  IPv4  18490      0t0  TCP *:http (LISTEN)
-nginx   1076 www-data    6u  IPv6  18491      0t0  TCP *:http (LISTEN)
-nginx   1076 www-data    7u  IPv4  18492      0t0  TCP *:https (LISTEN)
-nginx   1076 www-data    8u  IPv6  18493      0t0  TCP *:https (LISTEN)
-```
-```
-cat /etc/resolv.conf
 ```
 
----
-## Struktur Direktori
+## 3️⃣ Clone repository
 
 ```bash
-autoscript_znand/
-├── install.sh            # Master installer (internal)
-├── setup.sh              # Entry point buat user (via screen)
-├── menu.sh               # Menu utama
-├── install/              # Sub-installer per protokol
+git clone https://github.com/znandev/AutoscriptXRAY.git
+cd AutoscriptXRAY
+```
+
+## 4️⃣ Run installer
+
+```bash
+chmod +x setup.sh
+chmod +x uninstall.sh
+
+screen -S setup ./setup.sh
+```
+
+---
+
+# Project Structure
+
+```bash
+AutoscriptXRAY/
+├── install/
+│   ├── nginx.sh
 │   ├── ssh.sh
 │   ├── wg.sh
-│   ├── websocket.sh
-│   └── xray.sh
+│   ├── xray.sh
+│   └── zivpn.sh
+│
+├── config/
+│   ├── issue.net
+│   ├── nginx.conf
+│   ├── xray.conf
+│   └── xray.json
+│
 ├── ssh/
-│   ├── m-sshovpn
-│   ├── add-ssh.sh
-│   ├── del-ssh.sh
-│   ├── cek-login.sh
-│   ├── cek-aktif.sh
-│   └── restart-ssh.sh
+│   ├── addssh.sh
+│   └── m-ssh
+│
+├── sshws/
+│   ├── ws-dropbear.py
+│   ├── ws-dropbear.service
+│   ├── ws-stunnel.py
+│   ├── ws-stunnel.service
+│   ├── udp-custom.service
+│   └── udpgw.service
+│
+├── udp/
+│   ├── add-zivpn.sh
+│   ├── del-zivpn.sh
+│   ├── renew-zivpn.sh
+│   ├── trial-zivpn.sh
+│   └── m-zivpn
+│
 ├── wg/
 │   ├── m-wg
 │   ├── wg-add.sh
 │   ├── wg-del.sh
 │   └── wg-show.sh
-├── websocket/
-│   ├── restart-ws.sh
-│   ├── service-install.sh
-│   └── stop-ws.sh
+│
 ├── xray/
 │   ├── m-vmess
 │   ├── m-vless
 │   ├── m-trojan
 │   ├── m-ssws
-│   ├── add-*.sh, del-*.sh, cek-*.sh, renew-*.sh (semua protokol)
+│   ├── add-*.sh
+│   ├── del-*.sh
+│   ├── renew-*.sh
+│   └── cek-*.sh
+│
 ├── tools/
 │   ├── tools-menu
 │   ├── backup.sh
 │   ├── domain.sh
+│   ├── running.sh
 │   └── speedtest.sh
+│
+├── menu.sh
+├── setup.sh
+├── uninstall.sh
+├── README.md
+└── LICENSE
 ```
 
 ---
 
-## Kompatibilitas
+# Default Ports
 
-| OS           | Status    |
-|--------------|-----------|
-| Debian 12    | ⭐ Recommended |
-| Debian 11    | ✅ Supported |
-| Debian 10    | ❌ Deprecated (EOL)|
-| Ubuntu 20.04 | ⚠️Limited Support |
-| Ubuntu 22.04 | ✅ Supported |
-| OpenVZ       | ❌ Not supported |
-| KVM/VMWare   | ✅ Recommended |
+| Service        | Port    |
+| -------------- | ------- |
+| OpenSSH        | 22      |
+| Dropbear       | 109,143 |
+| SSH WS         | 2082    |
+| SSH SSL WS     | 2096    |
+| BadVPN UDPGW   | 7300    |
+| UDP Custom     | 1-65535 |
+| VMess TLS      | 443     |
+| VMess None TLS | 80      |
+| VLESS TLS      | 443     |
+| Trojan TLS     | 443     |
+| Shadowsocks WS | 443     |
 
 ---
+
+# Debugging
+
+Check listening ports:
+
+```bash
+ss -tulpn
+```
+
+Check NGINX:
+
+```bash
+nginx -t
+systemctl status nginx
+```
+
+Check XRAY:
+
+```bash
+xray -test -config /etc/xray/config.json
+systemctl status xray
+```
+
+Check SSH WS:
+
+```bash
+systemctl status ws-dropbear
+systemctl status ws-stunnel
+```
+
+Check UDP Tunnel:
+
+```bash
+systemctl status udp-custom
+systemctl status udpgw
+```
+
+---
+
+# 💻 Compatibility
+
+| OS           | Status        |
+| ------------ | ------------- |
+| Debian 12    | ⭐ Recommended |
+| Debian 11    | ✅ Supported   |
+| Ubuntu 22.04 | ✅ Supported   |
+| Ubuntu 20.04 | ⚠ Limited     |
+| Debian 10    | ❌ Deprecated  |
+| OpenVZ       | ❌ Unsupported |
+| KVM          | ✅ Recommended |
+| VMware       | ✅ Recommended |
+
+---
+
+# ⚠ Notes
+
+* Recommended fresh VPS installation
+* Recommended minimum RAM 1GB
+* Domain required for XRAY TLS
+* Cloudflare supported
+* Enhanced payload supported
+
+---
+
+# ❤️ Credits
+
+* XTLS / Xray-core
+* BadVPN
+* WireGuard
+* acme.sh
+* NGINX
