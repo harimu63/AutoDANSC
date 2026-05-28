@@ -1,4 +1,4 @@
-# Autoscript XRAY
+## Autoscript XRAY
 
 AutoScript VPN all-in-one
 
@@ -14,19 +14,19 @@ Dengan panel terminal interaktif modern dan struktur modular production-ready.
 
 ---
 
-# Features
+## Features
 
-## SSH Websocket
+### SSH Websocket
 
 * OpenSSH
-* Dropbear 2019.78
+* Dropbear
 * SSH WS
 * SSH SSL WS
 * Enhanced Payload Support
 * UDP Custom Support
 * BadVPN UDPGW
 
-## XRAY Core
+### XRAY Core
 
 * VMess WS + TLS
 * VLESS WS + TLS
@@ -36,19 +36,19 @@ Dengan panel terminal interaktif modern dan struktur modular production-ready.
 * NGINX Reverse Proxy
 * Auto SSL Certificate
 
-## WireGuard
+### WireGuard
 
 * WireGuard VPN
 * Client Generator
 * QRCode Support
 
-## UDP Tunnel
+### UDP Tunnel
 
 * UDP Custom
 * ZIVPN UDP
 * BadVPN UDPGW
 
-## Tools
+### Tools
 
 * Backup Menu
 * Domain Menu
@@ -56,7 +56,7 @@ Dengan panel terminal interaktif modern dan struktur modular production-ready.
 * Running Service Checker
 * Traffic Monitor
 
-## UI
+### UI
 
 * Interactive Terminal Panel
 * Colored Menu
@@ -66,7 +66,7 @@ Dengan panel terminal interaktif modern dan struktur modular production-ready.
 
 ---
 
-# Screenshot
+## Screenshot
 
 Open menu:
 
@@ -76,41 +76,32 @@ menu
 
 ---
 
-# Quick Install
+## Quick Install
 
-## 1️⃣ Install basic dependencies
+> Note: This script must be run as root!
 
 ```bash
+# update
 apt update -y && apt upgrade -y
 apt install git curl screen sudo -y
-```
 
-## 2️⃣ Disable IPv6
-
-```bash
+# disable ipv6
 sysctl -w net.ipv6.conf.all.disable_ipv6=1
 sysctl -w net.ipv6.conf.default.disable_ipv6=1
-```
 
-## 3️⃣ Clone repository
-
-```bash
+# clone the repos
 git clone https://github.com/znandev/AutoscriptXRAY.git
 cd AutoscriptXRAY
-```
 
-## 4️⃣ Run installer
-
-```bash
+# run main installer
 chmod +x setup.sh
 chmod +x uninstall.sh
-
 screen -S setup ./setup.sh
 ```
 
 ---
 
-# Project Structure
+## Project Structure
 
 ```bash
 AutoscriptXRAY/
@@ -178,7 +169,7 @@ AutoscriptXRAY/
 
 ---
 
-# Default Ports
+## Default Ports
 
 | Service        | Port    |
 | -------------- | ------- |
@@ -196,7 +187,7 @@ AutoscriptXRAY/
 
 ---
 
-# Debugging
+## Debugging
 
 Check listening ports:
 
@@ -234,7 +225,7 @@ systemctl status udpgw
 
 ---
 
-# 💻 Compatibility
+## Compatibility
 
 | OS           | Status        |
 | ------------ | ------------- |
@@ -249,7 +240,7 @@ systemctl status udpgw
 
 ---
 
-# ⚠ Notes
+## ⚠ Notes
 
 * Recommended fresh VPS installation
 * Recommended minimum RAM 1GB
@@ -259,7 +250,7 @@ systemctl status udpgw
 
 ---
 
-# ❤️ Credits
+## ❤️ Credits
 
 * XTLS / Xray-core
 * BadVPN
