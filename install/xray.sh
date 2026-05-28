@@ -1,9 +1,11 @@
 #!/bin/bash
-# Setup Xray Core + Nginx Reverse Proxy - by znand-dev
+# Setup Xray Core + Nginx Reverse Proxy - by znandev
+set -e
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
+BASE_DIR="/root/AutoscriptXRAY"
 
 clear
 
@@ -16,7 +18,7 @@ apt update -y
 
 apt install -y \
 curl wget socat cron jq unzip \
-gnupg coreutils lsof nginx qrencode \
+gnupg coreutils lsof qrencode \
 ca-certificates
 
 mkdir -p /etc/xray
@@ -76,6 +78,13 @@ chmod +x ~/.acme.sh/acme.sh
 
 ~/.acme.sh/acme.sh --register-account -m admin@$domain
 
+# ================= VALIDATION NGINX ========
+if ! command -v nginx >/dev/null 2>&1; then
+    echo -e "${RED}[ERROR] NGINX not installed!${NC}"
+    echo -e "${RED}Run install/nginx.sh first${NC}"
+    exit 1
+fi
+
 # ================= STOP SERVICE =================
 
 echo -e "${GREEN}🛑 Stop service yang memakai port 80...${NC}"
@@ -120,225 +129,26 @@ chmod 644 /etc/xray/cert.crt
 # ================= RESTART SERVICE =================
 
 systemctl restart nginx 2>/dev/null
-systemctl restart xray
+
 
 echo -e "${GREEN}✅ Certificate berhasil dibuat untuk ${domain}${NC}"
 # ================= XRAY CONFIG =================
 
-cat > /etc/xray/config.json <<EOF
-{
-  "log": {
-    "access": "/var/log/xray/access.log",
-    "error": "/var/log/xray/error.log",
-    "loglevel": "warning"
-  },
+if [[ ! -f "$BASE_DIR/config/xray.json" ]]; then
+    echo -e "${RED}[ERROR] xray.json not found!${NC}"
+    exit 1
+fi
 
-  "inbounds": [
+if [[ ! -f "$BASE_DIR/config/xray.conf" ]]; then
+    echo -e "${RED}[ERROR] xray.conf not found!${NC}"
+    exit 1
+fi
 
-    {
-      "listen": "127.0.0.1",
-      "port": 23456,
-      "protocol": "vmess",
-      "settings": {
-        "clients": []
-      },
-      "streamSettings": {
-        "network": "ws",
-        "security": "none",
-        "wsSettings": {
-          "path": "/vmess"
-        }
-      },
-      "tag": "vmess-ws-tls"
-    },
+mkdir -p /etc/xray
+cp $BASE_DIR/config/xray.json /etc/xray/config.json
 
-    {
-      "listen": "127.0.0.1",
-      "port": 23457,
-      "protocol": "vmess",
-      "settings": {
-        "clients": []
-      },
-      "streamSettings": {
-        "network": "ws",
-        "security": "none",
-        "wsSettings": {
-          "path": "/vmess"
-        }
-      },
-      "tag": "vmess-ws-nontls"
-    },
-
-    {
-      "listen": "127.0.0.1",
-      "port": 31234,
-      "protocol": "vmess",
-      "settings": {
-        "clients": []
-      },
-      "streamSettings": {
-        "network": "grpc",
-        "security": "none",
-        "grpcSettings": {
-          "serviceName": "vmess-grpc"
-        }
-      },
-      "tag": "vmess-grpc"
-    },
-
-    {
-      "listen": "127.0.0.1",
-      "port": 14016,
-      "protocol": "vless",
-      "settings": {
-        "clients": [],
-        "decryption": "none"
-      },
-      "streamSettings": {
-        "network": "ws",
-        "security": "none",
-        "wsSettings": {
-          "path": "/vless"
-        }
-      },
-      "tag": "vless-ws-tls"
-    },
-
-    {
-      "listen": "127.0.0.1",
-      "port": 14017,
-      "protocol": "vless",
-      "settings": {
-        "clients": [],
-        "decryption": "none"
-      },
-      "streamSettings": {
-        "network": "ws",
-        "security": "none",
-        "wsSettings": {
-          "path": "/vless"
-        }
-      },
-      "tag": "vless-ws-nontls"
-    },
-
-    {
-      "listen": "127.0.0.1",
-      "port": 24456,
-      "protocol": "vless",
-      "settings": {
-        "clients": [],
-        "decryption": "none"
-      },
-      "streamSettings": {
-        "network": "grpc",
-        "security": "none",
-        "grpcSettings": {
-          "serviceName": "vless-grpc"
-        }
-      },
-      "tag": "vless-grpc"
-    },
-
-    {
-      "listen": "127.0.0.1",
-      "port": 25432,
-      "protocol": "trojan",
-      "settings": {
-        "clients": []
-      },
-      "streamSettings": {
-        "network": "ws",
-        "security": "none",
-        "wsSettings": {
-          "path": "/trojan-ws"
-        }
-      },
-      "tag": "trojan-ws-tls"
-    },
-
-    {
-      "listen": "127.0.0.1",
-      "port": 33456,
-      "protocol": "trojan",
-      "settings": {
-        "clients": []
-      },
-      "streamSettings": {
-        "network": "grpc",
-        "security": "none",
-        "grpcSettings": {
-          "serviceName": "trojan-grpc"
-        }
-      },
-      "tag": "trojan-grpc"
-    },
-
-    {
-      "listen": "127.0.0.1",
-      "port": 30300,
-      "protocol": "shadowsocks",
-      "settings": {
-        "method": "aes-128-gcm",
-        "clients": []
-      },
-      "streamSettings": {
-        "network": "ws",
-        "security": "none",
-        "wsSettings": {
-          "path": "/ss-ws"
-        }
-      },
-      "tag": "ssws-ws-tls"
-    },
-
-    {
-      "listen": "127.0.0.1",
-      "port": 30301,
-      "protocol": "shadowsocks",
-      "settings": {
-        "method": "aes-128-gcm",
-        "clients": []
-      },
-      "streamSettings": {
-        "network": "ws",
-        "security": "none",
-        "wsSettings": {
-          "path": "/ss-ws"
-        }
-      },
-      "tag": "ssws-ws-nontls"
-    },
-
-    {
-      "listen": "127.0.0.1",
-      "port": 30310,
-      "protocol": "shadowsocks",
-      "settings": {
-        "method": "aes-128-gcm",
-        "clients": []
-      },
-      "streamSettings": {
-        "network": "grpc",
-        "security": "none",
-        "grpcSettings": {
-          "serviceName": "ss-grpc"
-        }
-      },
-      "tag": "ssws-grpc"
-    }
-
-  ],
-
-  "outbounds": [
-    {
-      "protocol": "freedom",
-      "tag": "direct"
-    }
-  ]
-}
-EOF
-
+chmod 644 /etc/nginx/conf.d/xray.conf
+chmod 644 /etc/xray/config.json
 # ================= SYSTEMD =================
 
 cat > /etc/systemd/system/xray.service <<EOF
@@ -357,152 +167,9 @@ Restart=on-failure
 WantedBy=multi-user.target
 EOF
 
-systemctl daemon-reload
-systemctl enable xray
+# ================= XRAY NGINX REVERSE PROXY ================
 
-# ================= NGINX =================
-
-rm -f /etc/nginx/sites-enabled/default
-rm -f /etc/nginx/sites-available/default
-
-cat > /etc/nginx/conf.d/xray.conf <<'EOF'
-server {
-    listen 80;
-    listen [::]:80;
-
-    server_name _;
-
-    # ================= VMESS NTLS =================
-    location /vmess {
-        proxy_redirect off;
-        proxy_pass http://127.0.0.1:23457;
-
-        proxy_http_version 1.1;
-
-        proxy_set_header Host $host;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-
-    # ================= VLESS NTLS =================
-    location /vless {
-        proxy_redirect off;
-        proxy_pass http://127.0.0.1:14017;
-
-        proxy_http_version 1.1;
-
-        proxy_set_header Host $host;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-
-    # ================= SSWS NTLS =================
-    location /ss-ws {
-        proxy_redirect off;
-        proxy_pass http://127.0.0.1:30301;
-
-        proxy_http_version 1.1;
-
-        proxy_set_header Host $host;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-}
-
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-
-    server_name _;
-
-    ssl_certificate     /etc/xray/cert.crt;
-    ssl_certificate_key /etc/xray/private.key;
-
-    ssl_protocols TLSv1.2 TLSv1.3;
-
-    # ================= VMESS TLS =================
-    location /vmess {
-        proxy_redirect off;
-        proxy_pass http://127.0.0.1:23456;
-
-        proxy_http_version 1.1;
-
-        proxy_set_header Host $host;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-
-    # ================= VLESS TLS =================
-    location /vless {
-        proxy_redirect off;
-        proxy_pass http://127.0.0.1:14016;
-
-        proxy_http_version 1.1;
-
-        proxy_set_header Host $host;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-
-    # ================= TROJAN WS =================
-    location /trojan-ws {
-        proxy_redirect off;
-        proxy_pass http://127.0.0.1:25432;
-
-        proxy_http_version 1.1;
-
-        proxy_set_header Host $host;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-
-    # ================= SSWS TLS =================
-    location /ss-ws {
-        proxy_redirect off;
-        proxy_pass http://127.0.0.1:30300;
-
-        proxy_http_version 1.1;
-
-        proxy_set_header Host $host;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-
-    # ================= VMESS GRPC =================
-    location /vmess-grpc {
-        grpc_pass grpc://127.0.0.1:31234;
-    }
-
-    # ================= VLESS GRPC =================
-    location /vless-grpc {
-        grpc_pass grpc://127.0.0.1:24456;
-    }
-
-    # ================= TROJAN GRPC =================
-    location /trojan-grpc {
-        grpc_pass grpc://127.0.0.1:33456;
-    }
-
-    # ================= SS GRPC =================
-    location /ss-grpc {
-        grpc_pass grpc://127.0.0.1:30310;
-    }
-}
-EOF
+cp $BASE_DIR/config/xray.conf /etc/nginx/conf.d/xray.conf
 
 # ================= TEST CONFIG =================
 
@@ -514,14 +181,16 @@ xray -test -config /etc/xray/config.json || exit 1
 
 # ================= START SERVICE =================
 
-systemctl enable nginx
+systemctl daemon-reload
+systemctl daemon-reexec
 
-systemctl restart nginx
+systemctl enable xray
 systemctl restart xray
 
+systemctl restart nginx
 # ================= INSTALL LOG =================
 
-cat > /root/log-install.txt <<LOGEOF
+cat >> /root/log-install.txt <<LOGEOF
 XRAY VMess TLS      : 443
 XRAY VMess None TLS : 80
 XRAY VMess gRPC     : 443

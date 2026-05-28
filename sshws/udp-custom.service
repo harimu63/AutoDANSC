@@ -1,0 +1,13 @@
+[Unit]
+Description=UDP Custom
+After=network.target
+
+[Service]
+User=root
+Type=simple
+ExecStart=/usr/local/bin/udp-custom server -exclude 7300 -mode system
+Restart=always
+RestartSec=3s
+
+[Install]
+WantedBy=multi-user.target

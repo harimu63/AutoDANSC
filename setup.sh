@@ -171,13 +171,19 @@ sleep 2
 # RUN INSTALLER
 # ==========================================
 
-info "Menjalankan installer XRAY..."
+info "Installing NGINX Reverse Proxy..."
+bash install/nginx.sh
+
+info "Installing XRAY Core..."
 bash install/xray.sh
 
-info "Menjalankan installer WireGuard..."
+info "Installing SSH Websocket..."
+bash install/ssh.sh
+
+info "Installing WireGuard..."
 bash install/wg.sh
 
-info "Menjalankan installer UDP ZIVPN..."
+info "Installing UDP ZIVPN..."
 bash install/zivpn.sh
 
 # ==========================================
@@ -185,6 +191,8 @@ bash install/zivpn.sh
 # ==========================================
 
 info "Menyalin command menu..."
+
+cp -f ssh/m-ssh /usr/bin/
 
 cp -f xray/m-vmess /usr/bin/
 cp -f xray/m-vless /usr/bin/
@@ -210,6 +218,7 @@ cp -f menu.sh /usr/bin/menu
 
 chmod +x /usr/bin/*
 
+chmod +x ssh/*.sh
 chmod +x xray/*.sh
 chmod +x wg/*.sh
 chmod +x udp/*.sh
@@ -223,8 +232,9 @@ chmod +x /usr/bin/menu
 
 info "Menyalin semua submenu ke /etc/autoscriptvpn/..."
 
-mkdir -p /etc/autoscriptvpn/{xray,wg,udp,tools}
+mkdir -p /etc/autoscriptvpn/{ssh,xray,wg,udp,tools}
 
+cp -r ssh/*.sh /etc/autoscriptvpn/ssh/
 cp -r xray/*.sh /etc/autoscriptvpn/xray/
 cp -r wg/*.sh /etc/autoscriptvpn/wg/
 cp -r udp/*.sh /etc/autoscriptvpn/udp/
@@ -270,6 +280,7 @@ echo -e "${blue}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${green}      INSTALLATION DONE${NC}"
 echo -e "${blue}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
+echo -e " SSH         : INSTALLED"
 echo -e " XRAY        : INSTALLED"
 echo -e " WireGuard   : INSTALLED"
 echo -e " UDP ZIVPN   : INSTALLED"
