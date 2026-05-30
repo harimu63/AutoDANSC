@@ -41,13 +41,21 @@ EXP=$(date -d "$days days" +%Y-%m-%d)
 
 # CREATE USER
 
-useradd 
--e "$EXP" 
--m 
--s /bin/bash 
-"$user"
+useradd \
+    -e "$EXP" \
+    -m \
+    -s /bin/bash \
+    "$user"
 
-echo "$user:$pass" | chpasswd
+id "$user" >/dev/null 2>&1 || {
+    echo "[ERROR] Failed to create user!"
+    exit 1
+}
+
+echo "$user:$pass" | chpasswd || {
+    echo "[ERROR] Failed to set password!"
+    exit 1
+}
 
 mkdir -p /root/accounts
 
