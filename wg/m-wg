@@ -56,10 +56,8 @@ menu
 ;;
 
 *)
-echo ""
-echo "❌ Invalid Menu!"
+echo "❌ Pilihan salah!"
 sleep 1
-m-wg
+exec m-wg
 ;;
-
 esac
