@@ -102,7 +102,7 @@ ln -fs /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
 
 info "Installing dependencies..."
 
-apt update -y >/dev/null 2>&1
+apt update -y
 
 apt install -y \
 curl \
@@ -216,15 +216,27 @@ cp -f menu.sh /usr/bin/menu
 # SET PERMISSION
 # ==========================================
 
-chmod +x /usr/bin/*
+chmod +x /usr/bin/menu
+
+chmod +x /usr/bin/m-ssh
+chmod +x /usr/bin/m-vmess
+chmod +x /usr/bin/m-vless
+chmod +x /usr/bin/m-trojan
+chmod +x /usr/bin/m-ssws
+chmod +x /usr/bin/m-wg
+chmod +x /usr/bin/m-zivpn
+
+chmod +x /usr/bin/tools-menu
+chmod +x /usr/bin/backup.sh
+chmod +x /usr/bin/speedtest.sh
+chmod +x /usr/bin/domain.sh
+chmod +x /usr/bin/running.sh
 
 chmod +x ssh/*.sh
 chmod +x xray/*.sh
 chmod +x wg/*.sh
 chmod +x udp/*.sh
 chmod +x tools/*.sh
-
-chmod +x /usr/bin/menu
 
 # ==========================================
 # COPY RUNTIME SCRIPT
@@ -234,11 +246,11 @@ info "Menyalin semua submenu ke /etc/autoscriptvpn/..."
 
 mkdir -p /etc/autoscriptvpn/{ssh,xray,wg,udp,tools}
 
-cp -r ssh/*.sh /etc/autoscriptvpn/ssh/
-cp -r xray/*.sh /etc/autoscriptvpn/xray/
-cp -r wg/*.sh /etc/autoscriptvpn/wg/
-cp -r udp/*.sh /etc/autoscriptvpn/udp/
-cp -r tools/*.sh /etc/autoscriptvpn/tools/
+cp -r ssh/* /etc/autoscriptvpn/ssh/
+cp -r xray/* /etc/autoscriptvpn/xray/
+cp -r wg/* /etc/autoscriptvpn/wg/
+cp -r udp/* /etc/autoscriptvpn/udp/
+cp -r tools/* /etc/autoscriptvpn/tools/
 
 chmod +x /etc/autoscriptvpn/*/*.sh
 
