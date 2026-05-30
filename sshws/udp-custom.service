@@ -1,11 +1,12 @@
 [Unit]
-Description=UDP Custom
+Description=UDP Custom Service
 After=network.target
 
 [Service]
 User=root
 Type=simple
-ExecStart=/usr/local/bin/udp-custom server -exclude 7300 -mode system
+WorkingDirectory=/etc/udp-custom
+ExecStart=/usr/local/bin/udp-custom server -c /etc/udp-custom/config.json -exclude 7300
 Restart=always
 RestartSec=3s
 

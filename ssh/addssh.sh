@@ -2,67 +2,99 @@
 
 clear
 
-DOMAIN=$(cat /etc/xray/domain)
+DOMAIN=$(cat /etc/xray/domain 2>/dev/null)
 IP=$(curl -s ipv4.icanhazip.com)
 
-echo "◇━━━━━━━━━━━━━━━━━◇"
-echo "   ⟨ CREATE SSH ⟩"
-echo "◇━━━━━━━━━━━━━━━━━◇"
-
-read -p "Username : " user
-
-# CHECK USER
-if id "$user" &>/dev/null; then
-    echo ""
-    echo "[ ERROR ] User already exists!"
-    echo ""
-    exit 1
+if [[ -z "$DOMAIN" ]]; then
+DOMAIN="$IP"
 fi
 
-read -p "Password : " pass
-read -p "Expired(days): " days
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "      CREATE SSH ACCOUNT"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+read -p "Username      : " user
+
+# CHECK USER
+
+if id "$user" &>/dev/null; then
+echo ""
+echo "[ ERROR ] User already exists!"
+echo ""
+exit 1
+fi
+
+read -s -p "Password      : " pass
+echo ""
+
+read -p "Expired Days  : " days
+
+if ! [[ "$days" =~ ^[0-9]+$ ]]; then
+echo ""
+echo "[ ERROR ] Invalid expiration days!"
+echo ""
+exit 1
+fi
 
 EXP=$(date -d "$days days" +%Y-%m-%d)
 
 # CREATE USER
-useradd \
--e "$EXP" \
--m \
--s /bin/bash "$user"
 
-# PASSWORD
+useradd 
+-e "$EXP" 
+-m 
+-s /bin/bash 
+"$user"
+
 echo "$user:$pass" | chpasswd
 
-clear
+mkdir -p /root/accounts
 
-cat <<EOF
+ACCOUNT_FILE="/root/accounts/${user}.txt"
 
-◇━━━━━━━━━━━━━━━━━━━━━━━━━◇
-  ⟨ SSH OVPN Account ⟩
-◇━━━━━━━━━━━━━━━━━━━━━━━━━◇
+cat > "$ACCOUNT_FILE" <<EOF
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SSH ACCOUNT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-» Username         : $user
-» Password         : $pass
+Username : $user
+Password : $pass
+Expired  : $EXP
 
-◇━━━━━━━━━━━━━━━━━━━━━━━━━◇
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-» Domain           : $DOMAIN
-» NS Domain        : none
-» Pub Key          : none
-» Port OpenSSH     : 22
-» Port UdpSSH      : 1-65535
-» Port DNS         : 53
-» Port Dropbear    : 109,143
-» Port Dropbear WS : 80
-» Port SSH WS      : 80
-» Port SSH SSL WS  : 443
-» Port SSL/TLS     : 443
-» Proxy Squid      : 3128
-» BadVPN UDP       : 7300
+Domain   : $DOMAIN
+IP VPS   : $IP
 
-◇━━━━━━━━━━━━━━━━━━━━━━━━━◇
-» Payload WS
-◇━━━━━━━━━━━━━━━━━━━━━━━━━◇
+OpenSSH  : 22
+Dropbear : 109,143
+SSH WS   : 2082
+SSH WSS  : 2096
+UdpSSH   : 1-65535
+BadVPN   : 7300
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SSH UDP CUSTOM
+
+$DOMAIN:1-65535@$user:$pass
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SSH WS
+
+$DOMAIN:2082@$user:$pass
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SSH WSS
+
+$DOMAIN:2096@$user:$pass
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Payload WS
 
 GET / HTTP/1.1[crlf]
 Host: $DOMAIN[crlf]
@@ -70,19 +102,9 @@ Upgrade: websocket[crlf]
 Connection: Upgrade[crlf]
 [crlf]
 
-◇━━━━━━━━━━━━━━━━━━━━━━━━━◇
-» Payload WSS
-◇━━━━━━━━━━━━━━━━━━━━━━━━━◇
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-GET wss://BUG.COM/ HTTP/1.1[crlf]
-Host: $DOMAIN[crlf]
-Upgrade: websocket[crlf]
-Connection: Upgrade[crlf]
-[crlf]
-
-◇━━━━━━━━━━━━━━━━━━━━━━━━━◇
-»  Payload Enhanced
-◇━━━━━━━━━━━━━━━━━━━━━━━━━◇
+Payload Enhanced
 
 GET / HTTP/1.1[crlf]
 Host: [host][crlf]
@@ -93,53 +115,44 @@ Upgrade: websocket[crlf]
 Connection: Upgrade[crlf]
 [crlf][split]
 
-◇━━━━━━━━━━━━━━━━━━━━━━━━━◇
-» SSH UDP Custom
-◇━━━━━━━━━━━━━━━━━━━━━━━━━◇
-
-$DOMAIN:1-65535@$user:$pass
-
-◇━━━━━━━━━━━━━━━━━━━━━━━━━◇
-» SSH WS
-◇━━━━━━━━━━━━━━━━━━━━━━━━━◇
-
-$DOMAIN:80@$user:$pass
-
-◇━━━━━━━━━━━━━━━━━━━━━━━━━◇
-» SSH WSS Stunnel
-◇━━━━━━━━━━━━━━━━━━━━━━━━━◇
-
-$DOMAIN:443@$user:$pass
-
-◇━━━━━━━━━━━━━━━━━━━━━━━━━◇
-» Save Account
-◇━━━━━━━━━━━━━━━━━━━━━━━━━◇
-
-/home/$user-$DOMAIN.txt
-
-◇━━━━━━━━━━━━━━━━━━━━━━━━━◇
-
-🗓 Expired Until : $EXP
-
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 EOF
 
-# SAVE ACCOUNT INFO
-cat > /home/$user-$DOMAIN.txt <<EOF
-◇━━━━━━━━━━━━━━━━━◇
-⟨  SSH OVPN Account ⟩
-◇━━━━━━━━━━━━━━━━━◇
+clear
 
-Username : $user
-Password : $pass
-Expired  : $EXP
-
-Domain   : $DOMAIN
-
-OpenSSH  : 22
-Dropbear : 109,143
-SSH WS   : 2082
-SSH WSS  : 2096
-UdpSSH   : 1-65535
-BadVPN   : 7300
-
-EOF
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "       SSH ACCOUNT"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "Username       : $user"
+echo "Password       : $pass"
+echo "Expired        : $EXP"
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "Domain         : $DOMAIN"
+echo "IP VPS         : $IP"
+echo ""
+echo "OpenSSH        : 22"
+echo "Dropbear       : 109,143"
+echo "SSH WS         : 2082"
+echo "SSH WSS        : 2096"
+echo "UdpSSH         : 1-65535"
+echo "BadVPN UDPGW   : 7300"
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "SSH UDP CUSTOM"
+echo "$DOMAIN:1-65535@$user:$pass"
+echo ""
+echo "SSH WS"
+echo "$DOMAIN:2082@$user:$pass"
+echo ""
+echo "SSH WSS"
+echo "$DOMAIN:2096@$user:$pass"
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Saved To:"
+echo "$ACCOUNT_FILE"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
