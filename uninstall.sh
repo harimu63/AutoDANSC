@@ -24,12 +24,10 @@ fi
 confirm() {
 read -rp "❗ Yakin ingin menghapus semua layanan AutoscriptXRAY? [y/N]: " confirm
 
-```
 [[ "$confirm" =~ ^[Yy]$ ]] || {
     echo -e "${YELLOW}Batal uninstall.${NC}"
     exit 1
 }
-```
 
 }
 
@@ -75,11 +73,9 @@ for svc in "${services[@]}"; do
 if systemctl list-unit-files | grep -q "^${svc}"; then
 info "Stopping service: $svc"
 
-```
     systemctl stop "$svc" >/dev/null 2>&1 || true
     systemctl disable "$svc" >/dev/null 2>&1 || true
 fi
-```
 
 done
 
