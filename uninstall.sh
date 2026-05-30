@@ -58,7 +58,6 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 services=(
 nginx
 xray
-ssh
 dropbear
 ws-dropbear
 ws-stunnel
