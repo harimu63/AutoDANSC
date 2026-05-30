@@ -2,8 +2,6 @@
 
 # Uninstall Script - AutoscriptXRAY by znandev
 
-set -e
-
 # ================= COLOR =================
 
 RED='\033[1;31m'
@@ -103,6 +101,8 @@ rm -f /etc/systemd/system/acme*.timer
 systemctl daemon-reload
 systemctl daemon-reexec
 
+sleep 3
+
 # ================= REMOVE BINARIES =================
 
 info "Removing binaries..."
@@ -123,9 +123,9 @@ rm -rf /etc/v2ray
 rm -rf /etc/zivpn
 rm -rf /etc/wireguard
 rm -rf /etc/autoscriptvpn
+rm -rf /etc/udp-custom
 
 rm -f /etc/nginx/conf.d/xray.conf
-rm -f /etc/nginx/nginx.conf
 
 rm -f /etc/default/dropbear
 rm -f /etc/issue.net
@@ -135,7 +135,10 @@ rm -f /etc/profile.d/no-login.sh
 rm -f /root/domain
 rm -f /root/scdomain
 rm -f /root/log-install.txt
+
 rm -f /etc/log-create-ssh.log
+
+rm -rf /root/accounts
 
 # ================= REMOVE MENUS =================
 
@@ -144,9 +147,7 @@ info "Removing menu commands..."
 binaries=(
 menu
 
-```
 m-ssh
-addsh
 
 m-vmess
 m-vless
@@ -158,16 +159,15 @@ m-wg
 m-zivpn
 
 tools-menu
+
 backup.sh
 speedtest.sh
 domain.sh
 running.sh
-```
-
 )
 
 for bin in "${binaries[@]}"; do
-rm -f "/usr/bin/$bin"
+    rm -f "/usr/bin/$bin"
 done
 
 # ================= REMOVE TRIAL USERS =================
@@ -196,13 +196,13 @@ fi
 
 warn "Removing packages..."
 
-apt remove -y 
-nginx 
-dropbear 
-stunnel4 
-wireguard 
-wireguard-tools 
-qrencode || true
+apt remove -y \
+    nginx \
+    dropbear \
+    stunnel4 \
+    wireguard \
+    wireguard-tools \
+    qrencode || true
 
 apt autoremove -y
 

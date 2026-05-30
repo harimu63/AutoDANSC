@@ -7,6 +7,7 @@
 # ==========================================
 
 # ================= COLOR =================
+PANEL_VERSION="v2.1.1"
 
 RED='\033[1;31m'
 GREEN='\033[1;32m'
@@ -57,7 +58,8 @@ echo ""
 IP=$(curl -s ipv4.icanhazip.com)
 DOMAIN=$(cat /etc/xray/domain 2>/dev/null || echo "N/A")
 
-ISP=$(curl -s ipinfo.io/org | cut -d " " -f2-)
+ISP=$(curl -s --max-time 3 ipinfo.io/org | cut -d " " -f2-)
+[[ -z "$ISP" ]] && ISP="Unknown"
 
 UPTIME=$(uptime -p | sed 's/up //')
 TIME=$(date "+%d-%m-%Y %H:%M:%S")
@@ -123,12 +125,28 @@ else
 ZIVPN="${RED}🔴 OFFLINE${NC}"
 fi
 
+UDPCUSTOM=$(systemctl is-active udp-custom)
+
+if [[ $UDPCUSTOM == "active" ]]; then
+    UDPCUSTOM="${GREEN}🟢 ONLINE${NC}"
+else
+    UDPCUSTOM="${RED}🔴 OFFLINE${NC}"
+fi
+
 SSHWS=$(systemctl is-active ws-dropbear)
 
 if [[ $SSHWS == "active" ]]; then
 SSHWS="${GREEN}🟢 ONLINE${NC}"
 else
 SSHWS="${RED}🔴 OFFLINE${NC}"
+fi
+
+DROPBEAR=$(systemctl is-active dropbear)
+
+if [[ $DROPBEAR == "active" ]]; then
+    DROPBEAR="${GREEN}🟢 ONLINE${NC}"
+else
+    DROPBEAR="${RED}🔴 OFFLINE${NC}"
 fi
 
 # ================= USER COUNT =================
@@ -175,8 +193,9 @@ clear
 
 # ================= HEADER =================
 
-echo -e "${CYAN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
+ececho -e "${CYAN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
 echo -e "${CYAN}┃${WHITE}          ⚡ ZNANDEV XRAY PANEL ⚡          ${CYAN}┃${NC}"
+printf "${CYAN}┃${WHITE}             Version %-8s            ${CYAN}┃${NC}\n" "$PANEL_VERSION"
 echo -e "${CYAN}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
 
 # ================= SYSTEM INFO =================
@@ -223,13 +242,16 @@ echo -e "${CYAN}└────────────────────�
 
 echo -e "${BLUE}┌──────────────── SERVICE ────────────────────┐${NC}"
 
-printf " ${WHITE}XRAY${NC}      : %-18b" "$XRAY"
+printf " ${WHITE}XRAY${NC}       : %-18b" "$XRAY"
 printf " ${WHITE}NGINX${NC} : %-18b\n" "$NGINX"
 
-printf " ${WHITE}WIREGUARD${NC} : %-18b" "$WG"
-printf " ${WHITE}ZIVPN${NC} : %-18b\n" "$ZIVPN"
+printf " ${WHITE}DROPBEAR${NC}   : %-18b" "$DROPBEAR"
+printf " ${WHITE}SSH WS${NC} : %-18b\n" "$SSHWS"
 
-printf " ${WHITE}SSH${NC}    : %-18b\n" "$SSHWS"
+printf " ${WHITE}UDP CUSTOM${NC} : %-18b" "$UDPCUSTOM"
+printf " ${WHITE}ZIVPN${NC}  : %-18b\n" "$ZIVPN"
+
+printf " ${WHITE}WIREGUARD${NC} : %-18b\n" "$WG"
 
 echo -e "${BLUE}└─────────────────────────────────────────────┘${NC}"
 

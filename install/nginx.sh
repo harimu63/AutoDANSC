@@ -1,6 +1,5 @@
 #!/bin/bash
 # Install Nginx Reverse Proxy - by znand-dev
-set -e
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -34,12 +33,12 @@ rm -f /etc/nginx/sites-available/default
 mkdir -p /etc/nginx/conf.d
 
 # COPY MAIN NGINX CONFIG
-cp $BASE_DIR/config/nginx.conf /etc/nginx/nginx.conf
-
 if [[ ! -f "$BASE_DIR/config/nginx.conf" ]]; then
     echo -e "${RED}[ERROR] nginx.conf not found!${NC}"
     exit 1
 fi
+
+cp "$BASE_DIR/config/nginx.conf" /etc/nginx/nginx.conf
 
 # PERMISSION
 chmod 644 /etc/nginx/nginx.conf
@@ -47,16 +46,21 @@ chmod 644 /etc/nginx/nginx.conf
 # TEST CONFIG
 echo -e "${GREEN}🧪 Testing Nginx Config...${NC}"
 
-nginx -t
-
-if [[ $? != 0 ]]; then
+nginx -t || {
     echo -e "${RED}❌ Nginx config error!${NC}"
     exit 1
-fi
+}
 
 # ENABLE SERVICE
 systemctl enable nginx
 systemctl restart nginx
+
+sleep 2
+
+systemctl is-active --quiet nginx || {
+    echo -e "${RED}[ERROR] NGINX failed to start!${NC}"
+    exit 1
+}
 
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"

@@ -32,14 +32,16 @@ apt install -y \
     wget \
     python3 \
     screen \
-    git
+    git \
+    libtomcrypt1 \
+    libtommath1
 
 mkdir -p /usr/local/bin
 
 # ================= INSTALL DROPBEAR =================
 
 echo ""
-echo -e "${GREEN}[INFO] Installing Dropbear 2019...${NC}"
+echo -e "${GREEN}[INFO] Installing Dropbear...${NC}"
 echo ""
 
 apt remove dropbear -y >/dev/null 2>&1 || true

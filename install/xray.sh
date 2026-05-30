@@ -2,8 +2,6 @@
 
 # Setup Xray Core + Nginx Reverse Proxy - by znandev
 
-set -e
-
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
@@ -37,7 +35,7 @@ apt update -y
 
 apt install -y \
 curl wget socat cron jq unzip \
-gnupg coreutils lsof nginx qrencode \
+gnupg coreutils lsof qrencode \
 ca-certificates
 
 mkdir -p /etc/xray
@@ -50,8 +48,11 @@ echo -e "${GREEN}⬇️ Downloading Xray Core...${NC}"
 
 mkdir -p /tmp/xray
 
-wget -q -O /tmp/xray.zip 
-https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip
+wget -qO /tmp/xray.zip \
+"https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip" || { 
+    echo -e "${RED}[ERROR] Failed to download Xray Core!${NC}" 
+    exit 1 
+    }
 
 unzip -o /tmp/xray.zip -d /tmp/xray
 
@@ -90,7 +91,8 @@ chmod +x ~/.acme.sh/acme.sh
 
 ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
 
-~/.acme.sh/acme.sh --register-account -m admin@$domain
+~/.acme.sh/acme.sh --register-account -m admin@$domain || true
+
 # ================= STOP PORT 80 =================
 
 echo -e "${GREEN}🛑 Freeing Port 80...${NC}"
@@ -104,23 +106,29 @@ fuser -k 80/tcp >/dev/null 2>&1 || true
 
 echo -e "${GREEN}🚀 Issuing SSL Certificate...${NC}"
 
-~/.acme.sh/acme.sh 
---issue 
--d "$domain" 
---standalone 
---keylength ec-256 
---force
+~/.acme.sh/acme.sh \
+    --issue \
+    -d "$domain" \
+    --standalone \
+    --keylength ec-256 \
+    --force || {
+        echo -e "${RED}[ERROR] Failed to issue SSL certificate!${NC}"
+        exit 1
+}
 
 # ================= INSTALL CERT =================
 
 mkdir -p /etc/xray
 
-~/.acme.sh/acme.sh 
---install-cert 
--d "$domain" 
---ecc 
---key-file /etc/xray/private.key 
---fullchain-file /etc/xray/cert.crt
+~/.acme.sh/acme.sh \
+    --install-cert \
+    -d "$domain" \
+    --ecc \
+    --key-file /etc/xray/private.key \
+    --fullchain-file /etc/xray/cert.crt || {
+        echo -e "${RED}[ERROR] Failed to install certificate!${NC}"
+        exit 1
+}
 
 # ================= PERMISSION =================
 
@@ -129,10 +137,10 @@ chmod 644 /etc/xray/cert.crt
 
 # ================= XRAY CONFIG =================
 
-cp ~/AutoscriptXRAY/config/xray.json 
+cp ~/AutoscriptXRAY/config/xray.json \
 /etc/xray/config.json
 
-cp ~/AutoscriptXRAY/config/xray.conf 
+cp ~/AutoscriptXRAY/config/xray.conf \
 /etc/nginx/conf.d/xray.conf
 
 chmod 644 /etc/xray/config.json
@@ -158,11 +166,18 @@ EOF
 
 # ================= TEST CONFIG =================
 
-echo -e "${GREEN}🧪 Testing Config...${NC}"
+echo -e "${GREEN}🧪 Testing NGINX Config...${NC}" 
 
-nginx -t || exit 1
+nginx -t || { 
+    echo -e "${RED}[ERROR] Invalid NGINX configuration!${NC}" 
+    exit 1 
+} 
 
-xray -test -config /etc/xray/config.json || exit 1
+echo -e "${GREEN}🧪 Testing XRAY Config...${NC}" 
+xray -test -config /etc/xray/config.json || { 
+    echo -e "${RED}[ERROR] Invalid XRAY configuration!${NC}" 
+    exit 1 
+}
 
 # ================= START SERVICE =================
 
@@ -173,6 +188,20 @@ systemctl enable xray
 systemctl restart xray
 
 systemctl restart nginx
+
+sleep 2 
+
+if ! systemctl is-active --quiet xray; then 
+echo -e "${RED}[ERROR] XRAY failed to start!${NC}" 
+journalctl -u xray -n 20 --no-pager 
+exit 1 
+fi 
+
+if ! systemctl is-active --quiet nginx; then 
+echo -e "${RED}[ERROR] NGINX failed to start!${NC}" 
+journalctl -u nginx -n 20 --no-pager 
+exit 1 
+fi
 
 # ================= INSTALL LOG =================
 
