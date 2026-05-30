@@ -112,9 +112,8 @@ x)
 menu
 ;;
 *)
-echo ""
-echo -e "${RED}❌ Invalid option!${NC}"
+echo "❌ Pilihan salah!"
 sleep 1
-exec "$0"
+exec m-zivpn
 ;;
 esac
