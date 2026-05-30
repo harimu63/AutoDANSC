@@ -21,11 +21,45 @@ echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━�
 read -p "👉 Pilih opsi: " opt
 
 case $opt in
-1) wg-add ;;
-2) wg-del ;;
-3) wg-show ;;
-4) wg show ;;
-5) systemctl restart wg-quick@wg0 && echo "✅ WireGuard direstart!" ;;
-x) menu ;;
-*) echo "❌ Pilihan salah!" ; sleep 1 ; m-wg ;;
+
+1)
+clear
+bash /etc/autoscriptvpn/wg/wg-add.sh
+;;
+
+2)
+clear
+bash /etc/autoscriptvpn/wg/wg-del.sh
+;;
+
+3)
+clear
+bash /etc/autoscriptvpn/wg/wg-show.sh
+;;
+
+4)
+clear
+wg show
+;;
+
+5)
+clear
+systemctl restart wg-quick@wg0
+
+echo ""
+echo "✅ WireGuard direstart!"
+echo ""
+;;
+
+x)
+menu
+;;
+
+*)
+echo ""
+echo "❌ Invalid Menu!"
+sleep 1
+m-wg
+;;
+
 esac
