@@ -32,7 +32,7 @@ case $x in
 
 1)
 clear
-bash /etc/autoscriptvpn/ssh/addsh.ssh
+addssh
 ;;
 
 2)
