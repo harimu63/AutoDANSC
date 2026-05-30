@@ -32,37 +32,37 @@ case $x in
 
 1)
 clear
-addssh
+bash /etc/autoscriptvpn/ssh/addssh.sh
 ;;
 
 2)
 clear
-trialssh
+echo "Trial SSH - Coming Soon"
 ;;
 
 3)
 clear
-renewssh
+echo "Renew SSH - Coming Soon"
 ;;
 
 4)
 clear
-delssh
+echo "Delete SSH - Coming Soon"
 ;;
 
 5)
 clear
-cekssh
+echo "Check Login SSH - Coming Soon"
 ;;
 
 6)
 clear
-memberSSH
+echo "List Member SSH - Coming Soon"
 ;;
 
 7)
 clear
-delexp
+echo "Delete Expired SSH - Coming Soon"
 ;;
 
 8)
