@@ -25,5 +25,9 @@ case $opt in
 3) bash /etc/autoscriptvpn/xray/cek-ssws.sh ;;
 4) bash /etc/autoscriptvpn/xray/renew-ssws.sh ;;
 x) menu ;;
-*) echo "❌ Pilihan salah!" ; sleep 1 ; m-ssws ;;
+*)
+echo "❌ Pilihan salah!"
+sleep 1
+exec m-ssws
+;;
 esac
