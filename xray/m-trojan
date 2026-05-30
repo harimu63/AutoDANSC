@@ -42,6 +42,6 @@ menu
 ;;
 *) echo "❌ Pilihan salah!"
 sleep 1
-exec m-vless
+exec m-trojan
 ;;
 esac
