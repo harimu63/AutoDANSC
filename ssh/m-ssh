@@ -101,10 +101,8 @@ exit
 ;;
 
 *)
-echo ""
-echo -e "${RED}Invalid Menu!${NC}"
+echo "❌ Pilihan salah!"
 sleep 1
-m-ssh
+exec m-ssh
 ;;
-
 esac
