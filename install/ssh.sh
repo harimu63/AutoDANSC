@@ -2,11 +2,12 @@
 
 # Setup SSH WebSocket + UDPGW - by znandev
 
-set -e
-
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
+
+DEPS_VERSION="deps-v2"
+RELEASE_URL="https://github.com/znandev/AutoscriptXRAY/releases/download/${DEPS_VERSION}"
 
 clear
 
@@ -16,26 +17,22 @@ sleep 1
 # ================= VALIDATION =================
 
 if [[ ! -f ~/AutoscriptXRAY/config/issue.net ]]; then
-echo -e "${RED}[ERROR] issue.net not found!${NC}"
-exit 1
+    echo -e "${RED}[ERROR] issue.net not found!${NC}"
+    exit 1
 fi
 
 # ================= INSTALL DEPENDENCY =================
 
 apt update -y
 
-apt install -y 
-openssh-server 
-stunnel4 
-curl 
-wget 
-python3 
-cmake 
-make 
-gcc 
-g++ 
-screen 
-git
+apt install -y \
+    openssh-server \
+    stunnel4 \
+    curl \
+    wget \
+    python3 \
+    screen \
+    git
 
 mkdir -p /usr/local/bin
 
@@ -45,15 +42,21 @@ echo ""
 echo -e "${GREEN}[INFO] Installing Dropbear 2019...${NC}"
 echo ""
 
-apt remove dropbear -y || true
+apt remove dropbear -y >/dev/null 2>&1 || true
 
 cd /tmp || exit
 
-wget -4 -O dropbear-bin.deb 
-http://archive.ubuntu.com/ubuntu/pool/universe/d/dropbear/dropbear-bin_2019.78-2build1_amd64.deb
+wget -qO dropbear-bin.deb \
+"${RELEASE_URL}/dropbear-bin_2019.78-2build1_amd64.deb" || {
+    echo -e "${RED}[ERROR] Failed to download dropbear-bin${NC}"
+    exit 1
+}
 
-wget -4 -O dropbear.deb 
-http://archive.ubuntu.com/ubuntu/pool/universe/d/dropbear/dropbear_2019.78-2build1_all.deb
+wget -qO dropbear.deb \
+"${RELEASE_URL}/dropbear_2019.78-2build1_all.deb" || {
+    echo -e "${RED}[ERROR] Failed to download dropbear${NC}"
+    exit 1
+}
 
 dpkg -i dropbear-bin.deb dropbear.deb
 
@@ -61,16 +64,15 @@ dpkg -i dropbear-bin.deb dropbear.deb
 
 mkdir -p /etc/dropbear
 
-[ ! -f /etc/dropbear/dropbear_rsa_host_key ] && 
+[ ! -f /etc/dropbear/dropbear_rsa_host_key ] && \
 dropbearkey -t rsa -f /etc/dropbear/dropbear_rsa_host_key
 
-[ ! -f /etc/dropbear/dropbear_ecdsa_host_key ] && 
+[ ! -f /etc/dropbear/dropbear_ecdsa_host_key ] && \
 dropbearkey -t ecdsa -f /etc/dropbear/dropbear_ecdsa_host_key
 
 # ================= BANNER =================
 
 cp ~/AutoscriptXRAY/config/issue.net /etc/issue.net
-
 chmod 644 /etc/issue.net
 
 # ================= DROPBEAR CONFIG =================
@@ -97,40 +99,22 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
-# ================= AUTO KICK SHELL =================
-
-cat > /etc/profile.d/no-login.sh <<'EOF'
-#!/bin/bash
-
-if [[ "$SSH_TTY" && "$PPID" -ne 1 ]]; then
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━"
-echo "     NO ACCESS"
-echo "  ONLY FOR SSH WS"
-echo "━━━━━━━━━━━━━━━━━━━━━━"
-sleep 2
-pkill -u $(whoami)
-fi
-EOF
-
-chmod +x /etc/profile.d/no-login.sh
-
 # ================= WS DROPBEAR =================
 
-cp ~/AutoscriptXRAY/sshws/ws-dropbear.py 
+cp ~/AutoscriptXRAY/sshws/ws-dropbear.py \
 /usr/local/bin/ws-dropbear
 
-cp ~/AutoscriptXRAY/sshws/ws-dropbear.service 
+cp ~/AutoscriptXRAY/sshws/ws-dropbear.service \
 /etc/systemd/system/
 
 chmod +x /usr/local/bin/ws-dropbear
 
 # ================= WS STUNNEL =================
 
-cp ~/AutoscriptXRAY/sshws/ws-stunnel.py 
+cp ~/AutoscriptXRAY/sshws/ws-stunnel.py \
 /usr/local/bin/ws-stunnel
 
-cp ~/AutoscriptXRAY/sshws/ws-stunnel.service 
+cp ~/AutoscriptXRAY/sshws/ws-stunnel.service \
 /etc/systemd/system/
 
 chmod +x /usr/local/bin/ws-stunnel
@@ -141,26 +125,17 @@ echo ""
 echo -e "${GREEN}[INFO] Installing BadVPN UDPGW...${NC}"
 echo ""
 
-cd /tmp || exit
+wget -qO /usr/local/bin/badvpn-udpgw \
+"${RELEASE_URL}/badvpn-udpgw" || {
+    echo -e "${RED}[ERROR] Failed to download BadVPN UDPGW${NC}"
+    exit 1
+}
 
-rm -rf badvpn
-
-git clone https://github.com/ambrop72/badvpn.git
-
-cd badvpn || exit
-
-mkdir build
-cd build || exit
-
-cmake .. 
--DBUILD_NOTHING_BY_DEFAULT=1 
--DBUILD_UDPGW=1
-
-make install
+chmod +x /usr/local/bin/badvpn-udpgw
 
 # ================= UDPGW SERVICE =================
 
-cp ~/AutoscriptXRAY/sshws/udpgw.service 
+cp ~/AutoscriptXRAY/sshws/udpgw.service \
 /etc/systemd/system/
 
 # ================= INSTALL UDP CUSTOM =================
@@ -169,21 +144,31 @@ echo ""
 echo -e "${GREEN}[INFO] Installing UDP Custom...${NC}"
 echo ""
 
-cd /usr/local/bin || exit
+wget -qO /usr/local/bin/udp-custom \
+"${RELEASE_URL}/udp-custom-linux-amd64" || {
+    echo -e "${RED}[ERROR] Failed to download UDP Custom${NC}"
+    exit 1
+}
 
-wget -O udp-custom 
-https://raw.githubusercontent.com/zahidbd2/udp-custom/main/udp-custom-linux-amd64
+chmod +x /usr/local/bin/udp-custom
 
-chmod +x udp-custom
+mkdir -p /etc/udp-custom
+
+cp ~/AutoscriptXRAY/config/udp-custom.json \
+/etc/udp-custom/config.json
 
 # ================= UDP CUSTOM SERVICE =================
 
-cp ~/AutoscriptXRAY/sshws/udp-custom.service 
+cp ~/AutoscriptXRAY/sshws/udp-custom.service \
 /etc/systemd/system/
 
 # ================= PERMISSION =================
 
-chmod 644 /etc/systemd/system/*.service
+chmod 644 /etc/systemd/system/dropbear.service
+chmod 644 /etc/systemd/system/ws-dropbear.service
+chmod 644 /etc/systemd/system/ws-stunnel.service
+chmod 644 /etc/systemd/system/udpgw.service
+chmod 644 /etc/systemd/system/udp-custom.service
 
 # ================= RELOAD =================
 
@@ -212,7 +197,7 @@ systemctl restart udp-custom
 
 # ================= HOLD DROPBEAR =================
 
-apt-mark hold dropbear || true
+apt-mark hold dropbear >/dev/null 2>&1 || true
 
 # ================= INSTALL LOG =================
 
@@ -241,12 +226,12 @@ echo ""
 echo -e "${GREEN}[ OK ] SSH + WS + UDPGW Installed${NC}"
 echo ""
 
-ss -tulnp | grep -E '22|109|143|2082|2096|7300'
+ss -tulnp | grep -E '22|109|143|2082|2096|7300|36712'
 
 echo ""
 echo -e "${GREEN}[INFO] Service Status:${NC}"
 
-systemctl --no-pager --type=service | 
+systemctl --no-pager --type=service | \
 grep -E 'dropbear|ssh|ws|udpgw|udp'
 
 echo ""
