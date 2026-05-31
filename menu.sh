@@ -270,7 +270,7 @@ echo -e " [7] ${WHITE}UDP ZIVPN${NC}    [x] ${WHITE}EXIT${NC}"
 echo -e "${RED}└─────────────────────────────────────────────┘${NC}"
 
 echo -e "${RED}┌──────────────── LICENSE ────────────────────┐${NC}"
-echo -e " ${WHITE}License${NC} : ZNDEV-ULTIMATE-2026"
+echo -e " ${WHITE}License${NC} : Gen AutoSC"
 echo -e " ${WHITE}Type${NC}    : Lifetime Premium"
 echo -e "${RED}└─────────────────────────────────────────────┘${NC}"
 
