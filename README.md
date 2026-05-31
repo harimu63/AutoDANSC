@@ -64,6 +64,9 @@ Dengan panel terminal interaktif modern dan struktur modular production-ready.
 * User Statistics
 * Traffic Statistics
 
+  UPDATE SC
+  bash <(curl -s https://raw.githubusercontent.com/cinnyza/AutoscriptXRAY/main/update.sh)
+
 ---
 
 ## Screenshot
