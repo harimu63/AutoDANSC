@@ -2,7 +2,7 @@
 
 # ==========================================
 
-# ZNANDEV XRAY PANEL
+# MENU XRAY PANEL
 
 # ==========================================
 
@@ -74,22 +74,79 @@ DISK=$(df -h / | awk 'NR==2{print $3 "/" $2}')
 
 # ================= NETWORK =================
 
-IFACE=$(ip route get 1.1.1.1 | awk '{print $5; exit}')
+IFACE=$(ip route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="dev") print $(i+1)}' | head -1)
+[[ -z "$IFACE" ]] && IFACE=$(ip link | awk -F': ' '/^[0-9]+: (eth|ens|enp|eno|wlan)/{print $2; exit}')
+
+# Auto init vnstat jika interface belum terdaftar
+if ! vnstat -i "$IFACE" --json >/dev/null 2>&1; then
+    vnstat -i "$IFACE" --add >/dev/null 2>&1
+    systemctl restart vnstat >/dev/null 2>&1
+    sleep 1
+fi
 
 MONTH_NAME=$(date +"%Y-%m")
 
-TODAY=$(vnstat -i $IFACE | awk '/today/ {print $8" "$9}')
+# FIX: vnstat 2.x pakai format berbeda dari 1.x
+# Coba pakai --json dulu (vnstat 2.x), fallback ke text parsing (vnstat 1.x)
+if vnstat --json >/dev/null 2>&1; then
+    # vnstat 2.x
+    TODAY=$(vnstat -i "$IFACE" --json d 2>/dev/null | python3 -c "
+import json,sys
+try:
+    d=json.load(sys.stdin)
+    days=d['interfaces'][0]['traffic']['day']
+    if days:
+        last=days[-1]
+        rx=last['rx']; tx=last['tx']
+        total=(rx+tx)
+        if total>=1073741824: print(f'{total/1073741824:.2f} GiB')
+        elif total>=1048576: print(f'{total/1048576:.2f} MiB')
+        else: print(f'{total/1024:.0f} KiB')
+    else: print('0 B')
+except: print('0 B')
+" 2>/dev/null)
 
-YESTERDAY=$(vnstat -i $IFACE | awk '/yesterday/ {print $8" "$9}')
+    MONTH=$(vnstat -i "$IFACE" --json m 2>/dev/null | python3 -c "
+import json,sys
+try:
+    d=json.load(sys.stdin)
+    months=d['interfaces'][0]['traffic']['month']
+    if months:
+        last=months[-1]
+        rx=last['rx']; tx=last['tx']
+        total=(rx+tx)
+        if total>=1073741824: print(f'{total/1073741824:.2f} GiB')
+        elif total>=1048576: print(f'{total/1048576:.2f} MiB')
+        else: print(f'{total/1024:.0f} KiB')
+    else: print('0 B')
+except: print('0 B')
+" 2>/dev/null)
 
-MONTH=$(vnstat -i $IFACE | awk -v m="$MONTH_NAME" '
-$1 ~ m {print $8" "$9}
-')
+    TOTAL_BW=$(vnstat -i "$IFACE" --json 2>/dev/null | python3 -c "
+import json,sys
+try:
+    d=json.load(sys.stdin)
+    t=d['interfaces'][0]['traffic']['total']
+    rx=t['rx']; tx=t['tx']
+    total=(rx+tx)
+    if total>=1073741824: print(f'{total/1073741824:.2f} GiB')
+    elif total>=1048576: print(f'{total/1048576:.2f} MiB')
+    else: print(f'{total/1024:.0f} KiB')
+except: print('0 B')
+" 2>/dev/null)
+    YESTERDAY="$MONTH"
+else
+    # vnstat 1.x fallback
+    TODAY=$(vnstat -i "$IFACE" | awk '/today/ {print $8" "$9}')
+    YESTERDAY=$(vnstat -i "$IFACE" | awk '/yesterday/ {print $8" "$9}')
+    MONTH=$(vnstat -i "$IFACE" | awk -v m="$MONTH_NAME" '$1 ~ m {print $8" "$9}')
+    TOTAL_BW=$(vnstat --oneline 2>/dev/null | cut -d\; -f15)
+fi
 
-TOTAL_BW=$(vnstat --oneline | cut -d; -f15)
-
+[[ -z "$TODAY" ]]     && TODAY="0 B"
 [[ -z "$YESTERDAY" ]] && YESTERDAY="0 B"
-[[ -z "$TOTAL_BW" ]] && TOTAL_BW="0 B"
+[[ -z "$MONTH" ]]     && MONTH="0 B"
+[[ -z "$TOTAL_BW" ]]  && TOTAL_BW="0 B"
 
 # ================= STATUS =================
 
@@ -194,7 +251,7 @@ clear
 # ================= HEADER =================
 
 ececho -e "${CYAN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
-echo -e "${CYAN}┃${WHITE}          ⚡ ZNANDEV XRAY PANEL ⚡          ${CYAN}┃${NC}"
+echo -e "${CYAN}┃${WHITE}          ⚡ Gen AutoSC XRAY PANEL ⚡          ${CYAN}┃${NC}"
 printf "${CYAN}┃${WHITE}             Version %-8s            ${CYAN}┃${NC}\n" "$PANEL_VERSION"
 echo -e "${CYAN}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
 
