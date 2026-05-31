@@ -18,8 +18,8 @@ echo ""
 echo -e "${CYAN}📋 List User Trojan:${NC}"
 echo ""
 
-# BUG FIX: tag yang benar adalah trojan-ws-tls
-users=$(jq -r '.inbounds[] | select(.tag=="trojan-ws-tls") | .settings.clients[].password' "$CONFIG" 2>/dev/null)
+# FIX: pakai .email bukan .password untuk tampilkan username
+users=$(jq -r '.inbounds[] | select(.tag=="trojan-ws-tls") | .settings.clients[].email' "$CONFIG" 2>/dev/null)
 
 if [[ -z "$users" ]]; then
     echo -e "${RED}Tidak ada user Trojan!${NC}"
@@ -49,12 +49,12 @@ fi
 cp "$CONFIG" "${CONFIG}.bak"
 tmpfile=$(mktemp)
 
-# BUG FIX: hapus dari trojan-ws-tls dan trojan-grpc
+# FIX: hapus berdasarkan .email bukan .password
 if ! jq --arg user "$user" '
 (.inbounds[] | select(.tag=="trojan-ws-tls").settings.clients) |=
-map(select(.password != $user)) |
+map(select(.email != $user)) |
 (.inbounds[] | select(.tag=="trojan-grpc").settings.clients) |=
-map(select(.password != $user))
+map(select(.email != $user))
 ' "$CONFIG" > "$tmpfile"; then
     echo -e "${RED}ERROR: Gagal modifikasi config!${NC}"
     rm -f "$tmpfile"
