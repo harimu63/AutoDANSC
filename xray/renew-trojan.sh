@@ -1,5 +1,4 @@
 #!/bin/bash
-
 clear
 
 BLUE='\033[0;34m'
@@ -12,34 +11,32 @@ CONFIG="/etc/xray/config.json"
 DB="/etc/xray/trojan.db"
 
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "\E[44;1;39m            PERPANJANG AKUN TROJAN            \E[0m"
+echo -e "\E[44;1;39m          PERPANJANG AKUN TROJAN             \E[0m"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-
-echo -e "${CYAN}📋 Daftar User VMess:${NC}"
+echo -e "${CYAN}📋 Daftar User Trojan:${NC}"
 echo ""
 
-# BUG FIX: tag yang benar adalah trojan-ws-tls
-users=$(jq -r '.inbounds[] | select(.tag=="trojan-ws-tls") | .settings.clients[].password' "$CONFIG" 2>/dev/null)
-
-if [[ -z "$users" ]]; then
-    echo -e "${RED}Tidak ada user VMess!${NC}"
+# FIX: baca username dari trojan.db (kolom 1), bukan dari config
+# Format trojan.db: username expiry uuid
+if [[ ! -f "$DB" ]] || [[ ! -s "$DB" ]]; then
+    echo -e "${RED}Tidak ada user Trojan!${NC}"
     sleep 2
     m-trojan
     exit
 fi
 
-for user in $users; do
-    exp=$(grep "^$user " "$DB" 2>/dev/null | awk '{print $2}')
-    echo -e " - ${GREEN}$user${NC} (exp: ${exp:-N/A})"
-done
+while read -r user exp_date uuid; do
+    [[ -z "$user" ]] && continue
+    echo -e " - ${GREEN}$user${NC} (exp: ${exp_date:-N/A})"
+done < "$DB"
 
 echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-
 read -rp "Masukkan username yang ingin diperpanjang: " user
 
-if ! echo "$users" | grep -w "$user" >/dev/null; then
+# Validasi user ada di db
+if ! grep -q "^$user " "$DB" 2>/dev/null; then
     echo -e "${RED}User tidak ditemukan!${NC}"
     sleep 2
     m-trojan
@@ -57,25 +54,20 @@ fi
 
 exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
 
-# BUG FIX: update expired di database file (bukan hanya comment di JSON)
-if grep -q "^$user " "$DB" 2>/dev/null; then
-    sed -i "s/^$user .*/$user $exp $(grep "^$user " "$DB" | awk '{print $3}')/" "$DB"
-else
-    echo "$user $exp" >> "$DB"
-fi
+# Update expired di db — pertahankan uuid di kolom 3
+uuid=$(grep "^$user " "$DB" | awk '{print $3}')
+sed -i "s/^$user .*/$user $exp $uuid/" "$DB"
 
 systemctl restart xray
 
 clear
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "\E[44;1;39m         AKUN BERHASIL DIPERPANJANG          \E[0m"
+echo -e "\E[44;1;39m       AKUN BERHASIL DIPERPANJANG            \E[0m"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo -e "User      : ${GREEN}$user${NC}"
-echo -e "Expired   : ${GREEN}$exp${NC}"
+echo -e " User    : ${GREEN}$user${NC}"
+echo -e " Expired : ${GREEN}$exp${NC}"
 echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-
 read -n 1 -s -r -p "Tekan apa saja untuk kembali..."
-
 m-trojan
