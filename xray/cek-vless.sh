@@ -1,21 +1,21 @@
 #!/bin/bash
-
 clear
 
 BLUE='\033[0;34m'
 GREEN='\033[0;32m'
+RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
 LOG="/var/log/xray/access.log"
 CONFIG="/etc/xray/config.json"
+DB="/etc/xray/vless.db"
 
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "\E[44;1;39m            CEK LOGIN VLESS USER             \E[0m"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
-# BUG FIX: tag yang benar adalah vless-ws-tls
 users=$(jq -r '.inbounds[] | select(.tag=="vless-ws-tls") | .settings.clients[].email' "$CONFIG" 2>/dev/null)
 
 if [[ -z "$users" ]]; then
@@ -25,16 +25,14 @@ if [[ -z "$users" ]]; then
     exit
 fi
 
-# Baca expiry dari database
-printf "%-20s %-15s %-12s %s\n" "USERNAME" "EXPIRED" "STATUS" "IP CLIENT"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
 today=$(date +%s)
 
+printf "%-20s %-13s %-10s %s\n" "USERNAME" "EXPIRED" "STATUS" "IP LOGIN"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
 for user in $users; do
-    # Ambil tanggal expired dari vless.db
-    exp_date=$(grep "^$user " /etc/xray/vless.db 2>/dev/null | awk '{print $2}')
-    
+    exp_date=$(grep "^$user " "$DB" 2>/dev/null | awk '{print $2}')
+
     if [[ -z "$exp_date" ]]; then
         status="${YELLOW}N/A${NC}"
         exp_display="N/A"
@@ -48,22 +46,19 @@ for user in $users; do
         exp_display="$exp_date"
     fi
 
-    # BUG FIX: cek login per-user dari access log (bukan cross-join semua user x semua IP)
+    # FIX: format log xray → "accepted tcp:IP:PORT ... email: USER"
+    # grep baris yang mengandung email user, ambil IP pertama di baris itu
     ip=$(grep "email: $user" "$LOG" 2>/dev/null \
-        | awk -F'from ' '{print $2}' \
-        | cut -d':' -f1 \
-        | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' \
-        | grep -v "127.0.0.1" \
-        | sort -u | tail -1)
+        | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' \
+        | grep -v "^127\.\|^10\.\|^172\.1[6-9]\.\|^172\.2[0-9]\.\|^172\.3[0-1]\.\|^192\.168\." \
+        | tail -1)
 
     [[ -z "$ip" ]] && ip="-"
 
-    printf "${GREEN}%-20s${NC} %-15s %-12b %s\n" "$user" "$exp_display" "$status" "$ip"
+    printf "${GREEN}%-20s${NC} %-13s %-18b %s\n" "$user" "$exp_display" "$status" "$ip"
 done
 
 echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-
 read -n 1 -s -r -p "Tekan apa saja untuk kembali ke menu..."
-
 m-vless
