@@ -12,14 +12,15 @@ CONFIG="/etc/xray/config.json"
 DB="/etc/xray/vmess.db"
 
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "\E[44;1;39m            CEK LOGIN VMESS USER             \E[0m"
+echo -e "\E[44;1;39m         CEK LOGIN VMESS USER              \E[0m"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
+# Baca username dari field email (berlaku untuk vmess, vless, DAN trojan)
 users=$(jq -r '.inbounds[] | select(.tag=="vmess-ws-tls") | .settings.clients[].email' "$CONFIG" 2>/dev/null)
 
 if [[ -z "$users" ]]; then
-    echo -e "${YELLOW}Belum ada user VMess.${NC}"
+    echo -e "${YELLOW}Belum ada user VMESS.${NC}"
     read -n 1 -s -r -p "Tekan apa saja untuk kembali..."
     m-vmess
     exit
@@ -27,10 +28,14 @@ fi
 
 today=$(date +%s)
 
-printf "%-20s %-13s %-10s %s\n" "USERNAME" "EXPIRED" "STATUS" "IP LOGIN"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+# Ambil log 1 jam terakhir saja untuk filter IP aktif
+cutoff=$(date -d '1 hour ago' '+%Y/%m/%d %H:%M:%S' 2>/dev/null)
+
+printf "${GREEN}%-22s${NC} %-13s %-10s %s\n" "USERNAME" "EXPIRED" "STATUS" "IP AKTIF"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 for user in $users; do
+    # Ambil expired dari database
     exp_date=$(grep "^$user " "$DB" 2>/dev/null | awk '{print $2}')
 
     if [[ -z "$exp_date" ]]; then
@@ -46,19 +51,38 @@ for user in $users; do
         exp_display="$exp_date"
     fi
 
-    # FIX: format log xray → "accepted tcp:IP:PORT ... email: USER"
-    # grep baris yang mengandung email user, ambil IP pertama di baris itu
-    ip=$(grep "email: $user" "$LOG" 2>/dev/null \
-        | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' \
-        | grep -v "^127\.\|^10\.\|^172\.1[6-9]\.\|^172\.2[0-9]\.\|^172\.3[0-1]\.\|^192\.168\." \
-        | tail -1)
+    # FIX: filter IP dari log 1 jam terakhir saja
+    # Format log: 2024/01/15 10:23:45 accepted tcp:IP:PORT [...] email: USER
+    ip=$(awk -v cutoff="$cutoff" -v user="$user" '
+        {
+            # Gabung kolom 1 dan 2 sebagai timestamp log
+            logtime = $1" "$2
+            # Hanya proses log yang lebih baru dari cutoff
+            if (logtime >= cutoff && $0 ~ "email: "user) {
+                # Cari pola IP di baris ini
+                for(i=1;i<=NF;i++) {
+                    if ($i ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$/) {
+                        split($i, a, ":")
+                        ip = a[1]
+                        # Filter IP private/lokal
+                        if (ip !~ /^127\.|^10\.|^192\.168\.|^172\.(1[6-9]|2[0-9]|3[01])\./) {
+                            last_ip = ip
+                        }
+                    }
+                }
+            }
+        }
+        END { print last_ip }
+    ' "$LOG" 2>/dev/null)
 
     [[ -z "$ip" ]] && ip="-"
 
-    printf "${GREEN}%-20s${NC} %-13s %-18b %s\n" "$user" "$exp_display" "$status" "$ip"
+    printf "${GREEN}%-22s${NC} %-13s %-18b %s\n" "$user" "$exp_display" "$status" "$ip"
 done
 
 echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e " ${YELLOW}*IP Aktif = koneksi dalam 1 jam terakhir${NC}"
+echo ""
 read -n 1 -s -r -p "Tekan apa saja untuk kembali ke menu..."
 m-vmess
