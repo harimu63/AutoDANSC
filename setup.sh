@@ -255,6 +255,19 @@ cp -r tools/* /etc/autoscriptvpn/tools/
 chmod +x /etc/autoscriptvpn/*/*.sh
 
 # ==========================================
+# ==========================================
+# SETUP AUTO EXPIRY CRON
+# ==========================================
+
+cp -f tools/expiry-check.sh /usr/bin/expiry-check.sh
+chmod +x /usr/bin/expiry-check.sh
+
+# Tambah cron job cek expiry tiap hari jam 00:00
+(crontab -l 2>/dev/null | grep -v "expiry-check"; echo "0 0 * * * /usr/bin/expiry-check.sh >> /var/log/expiry.log 2>&1") | crontab -
+
+info "Auto expiry cron dipasang"
+
+
 # AUTO MENU LOGIN
 # ==========================================
 

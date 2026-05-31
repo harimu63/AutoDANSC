@@ -18,36 +18,57 @@ echo ""
 echo -e "${CYAN}📋 List User Trojan:${NC}"
 echo ""
 
-users=$(jq -r '.inbounds[] | select(.tag=="trojan-tls") | .settings.clients[].email' $CONFIG)
+# BUG FIX: tag yang benar adalah trojan-ws-tls
+users=$(jq -r '.inbounds[] | select(.tag=="trojan-ws-tls") | .settings.clients[].password' "$CONFIG" 2>/dev/null)
 
 if [[ -z "$users" ]]; then
-echo -e "${RED}Tidak ada user Trojan!${NC}"
-read -n 1 -s -r -p "Tekan apa saja untuk kembali..."
-m-trojan
-exit
+    echo -e "${RED}Tidak ada user Trojan!${NC}"
+    read -n 1 -s -r -p "Tekan apa saja untuk kembali..."
+    m-trojan
+    exit
 fi
 
 num=1
-for user in $users
-do
-printf "${GREEN}[%s]${NC} %s\n" "$num" "$user"
-((num++))
+for user in $users; do
+    printf "${GREEN}[%s]${NC} %s\n" "$num" "$user"
+    ((num++))
 done
 
 echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-
 read -rp "👉 Masukkan username yang ingin dihapus: " user
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-jq --arg user "$user" '
-(.inbounds[] | select(.tag=="trojan-tls").settings.clients) |=
-map(select(.email != $user))
-' $CONFIG > /tmp/config.json
+if ! echo "$users" | grep -w "$user" >/dev/null 2>&1; then
+    echo -e "${RED}User '$user' tidak ditemukan!${NC}"
+    sleep 2
+    m-trojan
+    exit
+fi
 
-mv /tmp/config.json $CONFIG
+cp "$CONFIG" "${CONFIG}.bak"
+tmpfile=$(mktemp)
 
-# hapus comment expiry
-sed -i "/#trojan $user/d" $CONFIG
+# BUG FIX: hapus dari trojan-ws-tls dan trojan-grpc
+if ! jq --arg user "$user" '
+(.inbounds[] | select(.tag=="trojan-ws-tls").settings.clients) |=
+map(select(.password != $user)) |
+(.inbounds[] | select(.tag=="trojan-grpc").settings.clients) |=
+map(select(.password != $user))
+' "$CONFIG" > "$tmpfile"; then
+    echo -e "${RED}ERROR: Gagal modifikasi config!${NC}"
+    rm -f "$tmpfile"
+    exit 1
+fi
+
+if ! jq empty "$tmpfile" >/dev/null 2>&1; then
+    echo -e "${RED}ERROR: JSON tidak valid!${NC}"
+    rm -f "$tmpfile"
+    exit 1
+fi
+
+mv "$tmpfile" "$CONFIG"
+sed -i "/^$user /d" /etc/xray/trojan.db 2>/dev/null
 
 systemctl restart xray
 
@@ -56,5 +77,4 @@ echo -e "${GREEN}✅ User Trojan '${user}' berhasil dihapus!${NC}"
 echo ""
 
 read -n 1 -s -r -p "Tekan apa saja untuk kembali ke menu..."
-
 m-trojan
