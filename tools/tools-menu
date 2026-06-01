@@ -10,7 +10,6 @@ echo -e " ${GREEN}[1]${NC} Backup & Restore Akun"
 echo -e " ${GREEN}[2]${NC} Speedtest VPS"
 echo -e " ${GREEN}[3]${NC} Ganti Domain Xray"
 echo -e " ${GREEN}[4]${NC} Cek Status Layanan"
-echo -e " ${GREEN}[5]${NC} 🎁 Buat Akun Trial (1 Jam)"
 echo -e " ${GREEN}[6]${NC} 🔧 Fix SNI / SSL"
 echo -e " ${GREEN}[x]${NC} Kembali ke Menu Utama"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -21,8 +20,7 @@ case $opt in
     2) bash /etc/autoscriptvpn/tools/speedtest.sh ;;
     3) bash /etc/autoscriptvpn/tools/domain.sh ;;
     4) bash /etc/autoscriptvpn/tools/running.sh ;;
-    5) bash /etc/autoscriptvpn/xray/trial.sh ;;
-    6) bash /etc/autoscriptvpn/tools/fix-sni.sh ;;
+    5) bash /etc/autoscriptvpn/tools/fix-sni.sh ;;
     x) menu ;;
     *) echo -e "${RED}❌ Pilihan salah!${NC}"; sleep 1; tools-menu ;;
 esac
