@@ -361,7 +361,7 @@ function setup_telegram() {
         cat > /usr/bin/auto-backup-tg.sh << 'AUTOBACKUP'
 #!/bin/bash
 source /etc/autoscriptvpn/telegram.conf
-bash /usr/bin/backup-akun.sh auto
+bash /usr/bin/auto-backup-tg.sh
 AUTOBACKUP
         chmod +x /usr/bin/auto-backup-tg.sh
 
@@ -371,7 +371,7 @@ AUTOBACKUP
 
         # Pasang cron
         (crontab -l 2>/dev/null | grep -v "auto-backup-tg"; \
-         echo "0 1 * * * /usr/bin/auto-backup-tg.sh >> /var/log/backup-tg.log 2>&1") | crontab -
+         echo "0 1 * * * /usr/bin/auto-backup-tg.sh") | crontab -
 
         echo -e "${GREEN}✅ Auto backup setiap hari jam 01:00 aktif!${NC}"
     else
