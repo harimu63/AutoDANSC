@@ -11,6 +11,7 @@ echo -e " ${GREEN}[2]${NC} Speedtest VPS"
 echo -e " ${GREEN}[3]${NC} Ganti Domain Xray"
 echo -e " ${GREEN}[4]${NC} Cek Status Layanan"
 echo -e " ${GREEN}[6]${NC} 🔧 Fix SNI / SSL"
+echo -e " ${GREEN}[7]${NC} ⏰ Auto Reboot VPS"
 echo -e " ${GREEN}[x]${NC} Kembali ke Menu Utama"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 read -rp "Pilih: " opt
@@ -21,6 +22,7 @@ case $opt in
     3) bash /etc/autoscriptvpn/tools/domain.sh ;;
     4) bash /etc/autoscriptvpn/tools/running.sh ;;
     5) bash /etc/autoscriptvpn/tools/fix-sni.sh ;;
+    6) bash /etc/autoscriptvpn/tools/auto-reboot.sh ;;
     x) menu ;;
     *) echo -e "${RED}❌ Pilihan salah!${NC}"; sleep 1; tools-menu ;;
 esac
