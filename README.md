@@ -1,30 +1,17 @@
-## Autoscript XRAY
+# AutoDANSC
 
-AutoScript VPN all-in-one
+AutoDANSC adalah autoscript VPN all-in-one berbasis Shell untuk VPS Debian/Ubuntu. Script ini dibuat untuk mempermudah instalasi dan pengelolaan layanan VPN seperti SSH WebSocket, XRAY, WireGuard, UDP Tunnel, serta menu tools tambahan melalui panel terminal interaktif.
 
-Script modular dan interaktif untuk deploy:
+## Fitur Utama
 
-* SSH Websocket
-* XRAY Core
-* WireGuard
-* UDP Tunnel
-* Monitoring & Tools
-
-Dengan panel terminal interaktif modern dan struktur modular production-ready.
-
----
-
-## Features
-
-### SSH Websocket
+### SSH & WebSocket
 
 * OpenSSH
 * Dropbear
-* SSH WS
-* SSH SSL WS
-* Enhanced Payload Support
-* UDP Custom Support
+* SSH WebSocket
+* SSH SSL WebSocket
 * BadVPN UDPGW
+* UDP Custom
 
 ### XRAY Core
 
@@ -39,8 +26,8 @@ Dengan panel terminal interaktif modern dan struktur modular production-ready.
 ### WireGuard
 
 * WireGuard VPN
-* Client Generator
-* QRCode Support
+* Generator akun client
+* QR Code config
 
 ### UDP Tunnel
 
@@ -50,28 +37,70 @@ Dengan panel terminal interaktif modern dan struktur modular production-ready.
 
 ### Tools
 
-* Backup Menu
-* Domain Menu
+* Backup menu
+* Domain menu
 * Speedtest
-* Running Service Checker
-* Traffic Monitor
-
-### UI
-
-* Interactive Terminal Panel
-* Colored Menu
-* Real-time Service Status
-* User Statistics
-* Traffic Statistics
-
-  UPDATE SC
-  bash <(curl -s https://raw.githubusercontent.com/cinnyza/AutoscriptXRAY/main/update.sh)
+* Running service checker
+* Traffic monitor
+* Menu terminal interaktif
 
 ---
 
-## Screenshot
+## Support OS
 
-Open menu:
+| OS           | Status      |
+| ------------ | ----------- |
+| Debian 12    | Recommended |
+| Debian 11    | Supported   |
+| Ubuntu 22.04 | Supported   |
+| Ubuntu 20.04 | Limited     |
+| Debian 10    | Deprecated  |
+
+> Disarankan menggunakan VPS fresh install dengan akses root.
+
+---
+
+## Spesifikasi Minimum VPS
+
+* RAM minimal 1GB
+* KVM/VMware recommended
+* Domain aktif untuk XRAY TLS
+* Cloudflare boleh digunakan
+* Akses root VPS
+
+---
+
+## Cara Install
+
+Login ke VPS sebagai root, lalu salin perintah berikut:
+
+```bash
+apt update -y && apt upgrade -y && apt install -y git curl screen sudo
+```
+
+Disable IPv6:
+
+```bash
+sysctl -w net.ipv6.conf.all.disable_ipv6=1
+sysctl -w net.ipv6.conf.default.disable_ipv6=1
+```
+
+Clone repository:
+
+```bash
+git clone https://github.com/harimu63/AutoDANSC.git
+cd AutoDANSC
+```
+
+Jalankan installer:
+
+```bash
+chmod +x setup.sh
+chmod +x uninstall.sh
+screen -S setup ./setup.sh
+```
+
+Setelah instalasi selesai, buka menu dengan perintah:
 
 ```bash
 menu
@@ -79,92 +108,68 @@ menu
 
 ---
 
-## Quick Install
+## Install Sekali Salin
 
-> Note: This script must be run as root!
+Gunakan command ini jika ingin langsung install dari awal:
 
 ```bash
-# update
-apt update -y && apt upgrade -y
-apt install git curl screen sudo -y
-
-# disable ipv6
-sysctl -w net.ipv6.conf.all.disable_ipv6=1
-sysctl -w net.ipv6.conf.default.disable_ipv6=1
-
-# clone the repos
-git clone https://github.com/cinnyza/AutoscriptXRAY.git
-cd AutoscriptXRAY
-
-# run main installer
-chmod +x setup.sh
-chmod +x uninstall.sh
+apt update -y && apt upgrade -y && apt install -y git curl screen sudo && \
+sysctl -w net.ipv6.conf.all.disable_ipv6=1 && \
+sysctl -w net.ipv6.conf.default.disable_ipv6=1 && \
+git clone https://github.com/harimu63/AutoDANSC.git && \
+cd AutoDANSC && \
+chmod +x setup.sh uninstall.sh && \
 screen -S setup ./setup.sh
 ```
 
 ---
 
-## Project Structure
+## Cara Update Script
+
+Untuk update script ke versi terbaru dari repository AutoDANSC, jalankan:
 
 ```bash
-AutoscriptXRAY/
-├── install/
-│   ├── nginx.sh
-│   ├── ssh.sh
-│   ├── wg.sh
-│   ├── xray.sh
-│   └── zivpn.sh
-│
+bash <(curl -s https://raw.githubusercontent.com/harimu63/AutoDANSC/main/update.sh)
+```
+
+Atau jika sudah ada folder repo di VPS:
+
+```bash
+cd ~/AutoDANSC
+git pull origin main
+chmod +x update.sh
+./update.sh
+```
+
+---
+
+## Cara Uninstall
+
+Jika ingin menghapus script:
+
+```bash
+cd ~/AutoDANSC
+chmod +x uninstall.sh
+./uninstall.sh
+```
+
+---
+
+## Struktur Project
+
+```bash
+AutoDANSC/
 ├── config/
-│   ├── issue.net
-│   ├── nginx.conf
-│   ├── xray.conf
-│   └── xray.json
-│
+├── install/
 ├── ssh/
-│   ├── addssh.sh
-│   └── m-ssh
-│
 ├── sshws/
-│   ├── ws-dropbear.py
-│   ├── ws-dropbear.service
-│   ├── ws-stunnel.py
-│   ├── ws-stunnel.service
-│   ├── udp-custom.service
-│   └── udpgw.service
-│
-├── udp/
-│   ├── add-zivpn.sh
-│   ├── del-zivpn.sh
-│   ├── renew-zivpn.sh
-│   ├── trial-zivpn.sh
-│   └── m-zivpn
-│
-├── wg/
-│   ├── m-wg
-│   ├── wg-add.sh
-│   ├── wg-del.sh
-│   └── wg-show.sh
-│
-├── xray/
-│   ├── m-vmess
-│   ├── m-vless
-│   ├── m-trojan
-│   ├── m-ssws
-│   ├── add-*.sh
-│   ├── del-*.sh
-│   ├── renew-*.sh
-│   └── cek-*.sh
-│
 ├── tools/
-│   ├── tools-menu
-│   ├── backup.sh
-│   ├── domain.sh
-│   ├── running.sh
-│   └── speedtest.sh
-│
+├── udp/
+├── wg/
+├── xray/
 ├── menu.sh
 ├── setup.sh
+├── update.sh
 ├── uninstall.sh
 ├── README.md
 └── LICENSE
@@ -172,54 +177,54 @@ AutoscriptXRAY/
 
 ---
 
-## Default Ports
+## Default Port
 
-| Service        | Port    |
-| -------------- | ------- |
-| OpenSSH        | 22      |
-| Dropbear       | 109,143 |
-| SSH WS         | 2082    |
-| SSH SSL WS     | 2096    |
-| BadVPN UDPGW   | 7300    |
-| UDP Custom     | 1-65535 |
-| VMess TLS      | 443     |
-| VMess None TLS | 80      |
-| VLESS TLS      | 443     |
-| Trojan TLS     | 443     |
-| Shadowsocks WS | 443     |
+| Service        | Port     |
+| -------------- | -------- |
+| OpenSSH        | 22       |
+| Dropbear       | 109, 143 |
+| SSH WS         | 2082     |
+| SSH SSL WS     | 2096     |
+| BadVPN UDPGW   | 7300     |
+| UDP Custom     | 1-65535  |
+| VMess TLS      | 443      |
+| VMess Non TLS  | 80       |
+| VLESS TLS      | 443      |
+| Trojan TLS     | 443      |
+| Shadowsocks WS | 443      |
 
 ---
 
-## Debugging
+## Command Debugging
 
-Check listening ports:
+Cek port aktif:
 
 ```bash
 ss -tulpn
 ```
 
-Check NGINX:
+Cek NGINX:
 
 ```bash
 nginx -t
 systemctl status nginx
 ```
 
-Check XRAY:
+Cek XRAY:
 
 ```bash
 xray -test -config /etc/xray/config.json
 systemctl status xray
 ```
 
-Check SSH WS:
+Cek SSH WebSocket:
 
 ```bash
 systemctl status ws-dropbear
 systemctl status ws-stunnel
 ```
 
-Check UDP Tunnel:
+Cek UDP Tunnel:
 
 ```bash
 systemctl status udp-custom
@@ -228,35 +233,26 @@ systemctl status udpgw
 
 ---
 
-## Compatibility
+## Catatan
 
-| OS           | Status        |
-| ------------ | ------------- |
-| Debian 12    | ⭐ Recommended |
-| Debian 11    | ✅ Supported   |
-| Ubuntu 22.04 | ✅ Supported   |
-| Ubuntu 20.04 | ⚠ Limited     |
-| Debian 10    | ❌ Deprecated  |
-| OpenVZ       | ❌ Unsupported |
-| KVM          | ✅ Recommended |
-| VMware       | ✅ Recommended |
+* Gunakan VPS fresh install agar tidak bentrok dengan service lama.
+* Domain wajib diarahkan ke IP VPS sebelum install XRAY TLS.
+* Jalankan semua command sebagai root.
+* Backup data penting sebelum install atau update.
+* Jika update gagal, cek koneksi VPS dan pastikan repository GitHub dapat diakses.
 
 ---
 
-## ⚠ Notes
+## Credits
 
-* Recommended fresh VPS installation
-* Recommended minimum RAM 1GB
-* Domain required for XRAY TLS
-* Cloudflare supported
-* Enhanced payload supported
-
----
-
-## ❤️ Credits
-
-* XTLS / Xray-core
-* BadVPN
+* Xray-core
 * WireGuard
+* BadVPN
 * acme.sh
 * NGINX
+* OpenSSH
+* Dropbear
+
+## License
+
+MIT License
