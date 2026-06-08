@@ -1,6 +1,3 @@
-bash
-
-cat > /mnt/user-data/outputs/bot-telegram-menu.sh << 'ENDOFFILE'
 #!/bin/bash
 # ============================================================
 #   BOT TELEGRAM MANAGER - AutoDANSC
