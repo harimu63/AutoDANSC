@@ -16,7 +16,7 @@ sleep 1
 
 # ================= VALIDATION =================
 
-if [[ ! -f ~/AutoscriptXRAY/config/issue.net ]]; then
+if [[ ! -f ~/AutoDANSC/config/issue.net ]]; then
     echo -e "${RED}[ERROR] issue.net not found!${NC}"
     exit 1
 fi
@@ -74,7 +74,7 @@ dropbearkey -t ecdsa -f /etc/dropbear/dropbear_ecdsa_host_key
 
 # ================= BANNER =================
 
-cp ~/AutoscriptXRAY/config/issue.net /etc/issue.net
+cp ~/AutoDANSC/config/issue.net /etc/issue.net
 chmod 644 /etc/issue.net
 
 # ================= DROPBEAR CONFIG =================
@@ -103,20 +103,20 @@ EOF
 
 # ================= WS DROPBEAR =================
 
-cp ~/AutoscriptXRAY/sshws/ws-dropbear.py \
+cp ~/AutoDANSC/sshws/ws-dropbear.py \
 /usr/local/bin/ws-dropbear
 
-cp ~/AutoscriptXRAY/sshws/ws-dropbear.service \
+cp ~/AutoDANSC/sshws/ws-dropbear.service \
 /etc/systemd/system/
 
 chmod +x /usr/local/bin/ws-dropbear
 
 # ================= WS STUNNEL =================
 
-cp ~/AutoscriptXRAY/sshws/ws-stunnel.py \
+cp ~/AutoDANSC/sshws/ws-stunnel.py \
 /usr/local/bin/ws-stunnel
 
-cp ~/AutoscriptXRAY/sshws/ws-stunnel.service \
+cp ~/AutoDANSC/sshws/ws-stunnel.service \
 /etc/systemd/system/
 
 chmod +x /usr/local/bin/ws-stunnel
@@ -137,7 +137,7 @@ chmod +x /usr/local/bin/badvpn-udpgw
 
 # ================= UDPGW SERVICE =================
 
-cp ~/AutoscriptXRAY/sshws/udpgw.service \
+cp ~/AutoDANSC/sshws/udpgw.service \
 /etc/systemd/system/
 
 # ================= INSTALL UDP CUSTOM =================
@@ -156,12 +156,12 @@ chmod +x /usr/local/bin/udp-custom
 
 mkdir -p /etc/udp-custom
 
-cp ~/AutoscriptXRAY/config/udp-custom.json \
+cp ~/AutoDANSC/config/udp-custom.json \
 /etc/udp-custom/config.json
 
 # ================= UDP CUSTOM SERVICE =================
 
-cp ~/AutoscriptXRAY/sshws/udp-custom.service \
+cp ~/AutoDANSC/sshws/udp-custom.service \
 /etc/systemd/system/
 
 # ================= PERMISSION =================
