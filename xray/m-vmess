@@ -20,11 +20,11 @@ echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━�
 read -rp "👉 Pilih opsi: " opt
 
 case $opt in
-    1) bash /etc/autoscriptvpn/xray/add-vmess.sh ;;
-    2) bash /etc/autoscriptvpn/xray/trial-vmess.sh ;;
-    3) bash /etc/autoscriptvpn/xray/del-vmess.sh ;;
-    4) bash /etc/autoscriptvpn/xray/cek-vmess.sh ;;
-    5) bash /etc/autoscriptvpn/xray/renew-vmess.sh ;;
+    1) bash /etc/AutoDANSC/xray/add-vmess.sh ;;
+    2) bash /etc/AutoDANSC/xray/trial-vmess.sh ;;
+    3) bash /etc/AutoDANSC/xray/del-vmess.sh ;;
+    4) bash /etc/AutoDANSC/xray/cek-vmess.sh ;;
+    5) bash /etc/AutoDANSC/xray/renew-vmess.sh ;;
     x) menu ;;
     *) echo -e "${RED}❌ Pilihan salah!${NC}"; sleep 1; m-vmess ;;
 esac
