@@ -34,14 +34,8 @@ if ! [[ "$iplimit" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
-# cek duplicate user
-CLIENT_EXISTS=$(jq -r '.inbounds[].settings.clients[]?.email' /etc/xray/config.json | grep -w "$user" | wc -l)
-
-if [[ ${CLIENT_EXISTS} == '1' ]]; then
-    echo ""
-    echo "User already exists!"
-    exit 1
-fi
+uuid=$(cat /proc/sys/kernel/random/uuid)
+exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
 
 # backup config
 cp /etc/xray/config.json /etc/xray/config.json.bak
