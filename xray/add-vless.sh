@@ -16,6 +16,15 @@ grpc="443"
 # input user
 read -rp "Username : " user
 read -rp "Expired (days): " masaaktif
+read -rp "Limit Kuota (GB, 0 = Unlimited): " quota
+
+[[ -z "$quota" ]] && quota=0
+
+if ! [[ "$quota" =~ ^[0-9]+$ ]]; then
+    echo ""
+    echo "ERROR: Limit kuota harus angka. Contoh: 10 atau 0 untuk Unlimited."
+    exit 1
+fi
 
 uuid=$(cat /proc/sys/kernel/random/uuid)
 exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
@@ -105,7 +114,7 @@ if ! systemctl is-active --quiet xray; then
 fi
 
 # simpan database user
-echo "${user} ${exp} ${uuid}" >> /etc/xray/vless.db
+echo "${user} ${exp} ${uuid} ${quota}" >> /etc/xray/vless.db
 
 # generate vless link
 vlesslink1="vless://${uuid}@${domain}:${tls}?encryption=none&security=tls&sni=${domain}&type=ws&host=${domain}&path=%2Fvless#${user}"
