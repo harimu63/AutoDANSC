@@ -17,8 +17,10 @@ grpc="443"
 read -rp "Username : " user
 read -rp "Expired (days): " masaaktif
 read -rp "Limit Kuota (GB, 0 = Unlimited): " quota
+read -rp "Limit IP Login (0 = Unlimited): " iplimit
 
 [[ -z "$quota" ]] && quota=0
+[[ -z "$iplimit" ]] && iplimit=0
 
 if ! [[ "$quota" =~ ^[0-9]+$ ]]; then
     echo ""
@@ -26,8 +28,11 @@ if ! [[ "$quota" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
-uuid=$(cat /proc/sys/kernel/random/uuid)
-exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
+if ! [[ "$iplimit" =~ ^[0-9]+$ ]]; then
+    echo ""
+    echo "ERROR: Limit IP harus angka. Contoh: 2 atau 0 untuk Unlimited."
+    exit 1
+fi
 
 # cek duplicate user
 CLIENT_EXISTS=$(jq -r '.inbounds[].settings.clients[]?.email' /etc/xray/config.json | grep -w "$user" | wc -l)
@@ -114,7 +119,7 @@ if ! systemctl is-active --quiet xray; then
 fi
 
 # simpan database user
-echo "${user} ${exp} ${uuid} ${quota}" >> /etc/xray/vmess.db
+echo "${user} ${exp} ${uuid} ${quota} ${iplimit}" >> /etc/xray/vmess.db
 
 # generate vmess tls
 vmess_json_tls=$(cat <<EOF
