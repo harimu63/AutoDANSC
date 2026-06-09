@@ -230,7 +230,11 @@ Cek UDP Tunnel:
 systemctl status udp-custom
 systemctl status udpgw
 ```
-
+systemctl daemon-reload
+systemctl enable nginx
+systemctl enable xray
+systemctl restart nginx
+systemctl restart xray
 ---
 
 ## Catatan
