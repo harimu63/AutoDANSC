@@ -4,9 +4,37 @@
     "error": "/var/log/xray/error.log",
     "loglevel": "warning"
   },
-
+  "stats": {},
+  "api": {
+    "tag": "api",
+    "services": [
+      "StatsService"
+    ]
+  },
+  "policy": {
+    "levels": {
+      "0": {
+        "statsUserUplink": true,
+        "statsUserDownlink": true
+      }
+    },
+    "system": {
+      "statsInboundUplink": true,
+      "statsInboundDownlink": true,
+      "statsOutboundUplink": true,
+      "statsOutboundDownlink": true
+    }
+  },
   "inbounds": [
-
+    {
+      "listen": "127.0.0.1",
+      "port": 10085,
+      "protocol": "dokodemo-door",
+      "settings": {
+        "address": "127.0.0.1"
+      },
+      "tag": "api"
+    },
     {
       "listen": "127.0.0.1",
       "port": 23456,
@@ -23,7 +51,6 @@
       },
       "tag": "vmess-ws-tls"
     },
-
     {
       "listen": "127.0.0.1",
       "port": 23457,
@@ -40,7 +67,6 @@
       },
       "tag": "vmess-ws-nontls"
     },
-
     {
       "listen": "127.0.0.1",
       "port": 31234,
@@ -57,7 +83,6 @@
       },
       "tag": "vmess-grpc"
     },
-
     {
       "listen": "127.0.0.1",
       "port": 14016,
@@ -75,7 +100,6 @@
       },
       "tag": "vless-ws-tls"
     },
-
     {
       "listen": "127.0.0.1",
       "port": 14017,
@@ -93,7 +117,6 @@
       },
       "tag": "vless-ws-nontls"
     },
-
     {
       "listen": "127.0.0.1",
       "port": 24456,
@@ -111,7 +134,6 @@
       },
       "tag": "vless-grpc"
     },
-
     {
       "listen": "127.0.0.1",
       "port": 25432,
@@ -128,7 +150,6 @@
       },
       "tag": "trojan-ws-tls"
     },
-
     {
       "listen": "127.0.0.1",
       "port": 33456,
@@ -145,7 +166,6 @@
       },
       "tag": "trojan-grpc"
     },
-
     {
       "listen": "127.0.0.1",
       "port": 30300,
@@ -163,7 +183,6 @@
       },
       "tag": "ssws-ws-tls"
     },
-
     {
       "listen": "127.0.0.1",
       "port": 30301,
@@ -181,7 +200,6 @@
       },
       "tag": "ssws-ws-nontls"
     },
-
     {
       "listen": "127.0.0.1",
       "port": 30310,
@@ -199,13 +217,26 @@
       },
       "tag": "ssws-grpc"
     }
-
   ],
-
   "outbounds": [
     {
       "protocol": "freedom",
       "tag": "direct"
+    },
+    {
+      "protocol": "blackhole",
+      "tag": "blocked"
     }
-  ]
+  ],
+  "routing": {
+    "rules": [
+      {
+        "type": "field",
+        "inboundTag": [
+          "api"
+        ],
+        "outboundTag": "api"
+      }
+    ]
+  }
 }
