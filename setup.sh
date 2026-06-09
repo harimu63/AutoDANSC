@@ -285,6 +285,50 @@ EOF
 chmod 644 /root/.profile
 
 # ==========================================
+# SETUP XRAY QUOTA CHECKER
+# ==========================================
+info "Setting up Xray quota checker..."
+
+if [[ -f "$SCRIPT_DIR/tools/quota-checker.sh" ]]; then
+    cp "$SCRIPT_DIR/tools/quota-checker.sh" /usr/local/sbin/quota-checker
+    chmod +x /usr/local/sbin/quota-checker
+
+    cat >/etc/systemd/system/quota-checker.service <<'EOF'
+[Unit]
+Description=AutoDANSC Xray Quota Checker
+After=xray.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/quota-checker
+EOF
+
+    cat >/etc/systemd/system/quota-checker.timer <<'EOF'
+[Unit]
+Description=Run AutoDANSC Xray Quota Checker every 1 minute
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+Unit=quota-checker.service
+
+[Install]
+WantedBy=timers.target
+EOF
+
+    systemctl daemon-reload
+    systemctl enable --now quota-checker.timer >/dev/null 2>&1
+
+    if systemctl is-active --quiet quota-checker.timer; then
+        info "Quota checker timer aktif"
+    else
+        warn "Quota checker timer belum aktif"
+    fi
+else
+    warn "tools/quota-checker.sh tidak ditemukan, skip quota checker"
+fi
+
+# ==========================================
 # SETUP VNSTAT BANDWIDTH MONITOR
 # ==========================================
 info "Setting up vnStat bandwidth monitor..."
