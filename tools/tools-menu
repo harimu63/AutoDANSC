@@ -13,6 +13,7 @@ echo -e " ${GREEN}[4]${NC} Cek Status Layanan"
 echo -e " ${GREEN}[5]${NC} 🔧 Fix SNI / SSL"
 echo -e " ${GREEN}[6]${NC} ⏰ Auto Reboot VPS"
 echo -e " ${GREEN}[7]${NC} 🔄 Rebuild Database (Sinkron Config)"
+echo -e " ${GREEN}[8]${NC} 🤖 Bot Telegram Manager"
 echo -e " ${GREEN}[x]${NC} Kembali ke Menu Utama"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 read -rp "Pilih: " opt
@@ -25,6 +26,16 @@ case $opt in
     5) bash /etc/autoscriptvpn/tools/fix-sni.sh ;;
     6) bash /etc/autoscriptvpn/tools/auto-reboot.sh ;;
     7) bash /etc/autoscriptvpn/tools/rebuild-db.sh ;;
+    8)
+    if [[ -f "$TOOLS_DIR/bot-telegram-menu.sh" ]]; then
+      bash "$TOOLS_DIR/bot-telegram-menu.sh"
+    else
+      echo -e "${RED}❌ File bot-telegram-menu.sh belum ada di $TOOLS_DIR${NC}"
+      echo -e "${YELLOW}Upload dulu file bot-telegram-menu.sh ke folder tools.${NC}"
+      sleep 3
+      tools-menu
+    fi
+    ;;
     x) menu ;;
     *) echo -e "${RED}❌ Pilihan salah!${NC}"; sleep 1; tools-menu ;;
 esac
