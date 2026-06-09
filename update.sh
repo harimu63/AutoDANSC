@@ -15,8 +15,8 @@ echo ""
 
 [[ "${EUID}" -ne 0 ]] && echo -e "${red}Harus root!${NC}" && exit 1
 
-REPO_DIR="$HOME/AutoscriptXRAY"
-INSTALL_DIR="/etc/autoscriptvpn"
+REPO_DIR="$HOME/AutoDANSC"
+INSTALL_DIR="/etc/AutoDANSC"
 
 [[ ! -d "$REPO_DIR" ]] && echo -e "${red}Folder repo tidak ditemukan!${NC}" && exit 1
 
