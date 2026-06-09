@@ -34,6 +34,8 @@ if ! [[ "$iplimit" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
+uuid=$(cat /proc/sys/kernel/random/uuid)
+exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
 # cek duplicate user
 CLIENT_EXISTS=$(jq -r '.inbounds[].settings.clients[]?.email' /etc/xray/config.json | grep -w "$user" | wc -l)
 
