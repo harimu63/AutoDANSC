@@ -138,7 +138,7 @@ CONFIG_FILE = "/etc/autosc/bot-telegram.conf"
 logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=logging.INFO)
 log = logging.getLogger(__name__)
 
-ST_PROTO, ST_USER, ST_DUR, ST_DEL_PROTO, ST_DEL_USER = range(5)
+(ST_PROTO, ST_USER, ST_DUR, ST_QUOTA, ST_IPLIMIT, ST_DEL_PROTO, ST_DEL_USER, ST_EXT_PROTO, ST_EXT_USER, ST_EXT_DUR) = range(10)
 
 def load_config():
     try:
@@ -177,7 +177,7 @@ def first_existing(paths):
 
 def find_script(names):
     bases = [
-        "/root/AutoDANSC", "/root/AutoscriptXRAY", "/root/AutoscriptXray",
+        "/root/AutoDANSC", "/root/AutoDANSC", "/root/AutoDANSC",
         "/root/autoscript", "/root/Autoscript", "/usr/local/sbin", "/usr/bin"
     ]
     candidates = []
@@ -275,6 +275,75 @@ def cb_buat(update, context):
     q.edit_message_text("➕ *BUAT AKUN*\n\nPilih jenis akun:", parse_mode=ParseMode.MARKDOWN, reply_markup=proto_kb("add_"))
     return ST_PROTO
 
+def msg_quota(u, c):
+    try:
+        q = int(u.message.text.strip())
+        assert q >= 0
+    except:
+        u.message.reply_text("❌ Masukkan angka >= 0!")
+        return ST_QUOTA
+
+    c.user_data["quota"] = q
+    u.message.reply_text(
+        f"✅ Kuota: `{q if q != 0 else 'Unlimited'}`\n\n"
+        "Masukkan limit IP login, contoh: `2`\n"
+        "Ketik `0` untuk unlimited:",
+        parse_mode=ParseMode.MARKDOWN
+    )
+    return ST_IPLIMIT
+
+def msg_iplimit(u, c):
+    try:
+        iplimit = int(u.message.text.strip())
+        assert iplimit >= 0
+    except:
+        u.message.reply_text("❌ Masukkan angka >= 0!")
+        return ST_IPLIMIT
+
+    c.user_data["iplimit"] = iplimit
+    return _do_buat(u, c)
+    
+def _do_buat(u, c):
+    p = c.user_data["proto"]
+    n = c.user_data["user"]
+    d = c.user_data["dur"]
+    q = c.user_data.get("quota", 0)
+    iplimit = c.user_data.get("iplimit", 0)
+
+    sc = ADD_SC.get(p, "")
+    if not sc or not os.path.exists(sc):
+        u.message.reply_text(
+            f"❌ Script tidak ditemukan:\n`{sc}`",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=main_kb()
+        )
+        return ConversationHandler.END
+
+    u.message.reply_text(
+        f"⏳ Membuat akun `{n}` ({p.upper()})...\n"
+        f"Durasi: `{d}` hari\n"
+        f"Kuota: `{q if q != 0 else 'Unlimited'}`\n"
+        f"Limit IP: `{iplimit if iplimit != 0 else 'Unlimited'}`",
+        parse_mode=ParseMode.MARKDOWN
+    )
+
+    if p == "ssh":
+        cmd = f"printf '%s\n%s\n' '{n}' '{d}' | bash {sc}"
+    else:
+        cmd = f"printf '%s\n%s\n%s\n%s\n' '{n}' '{d}' '{q}' '{iplimit}' | bash {sc}"
+
+    o, e, rc = run(cmd, 90)
+
+    txt = (
+        f"✅ *Akun Berhasil Dibuat!*\n\n```\n{o}\n```"
+        if rc == 0 else
+        f"❌ *Gagal!*\n\n```\n{e or o}\n```"
+    )
+
+    u.message.reply_text(txt, parse_mode=ParseMode.MARKDOWN, reply_markup=main_kb())
+    c.user_data.clear()
+    return ConversationHandler.END
+
 def cb_add_proto(update, context):
     q = update.callback_query; q.answer()
     proto = q.data.replace("add_", "")
@@ -357,7 +426,7 @@ def cb_backup(update, context):
 def cb_do_backup(update, context):
     q = update.callback_query; q.answer()
     q.edit_message_text("⏳ Sedang membuat backup dan mengirim ke Telegram...")
-    script = first_existing(["/root/AutoDANSC/tools/backup.sh", "/root/AutoscriptXRAY/tools/backup.sh", "/usr/local/sbin/backup"])
+    script = first_existing(["/root/AutoDANSC/tools/backup.sh", "/root/AutoDANSC/tools/backup.sh", "/usr/local/sbin/backup"])
     if script:
         out, err, rc = run(f"bash '{script}'", 300)
     else:
@@ -394,10 +463,12 @@ def main():
     conv_add = ConversationHandler(
         entry_points=[CallbackQueryHandler(cb_buat, pattern="^buat$")],
         states={
-            ST_PROTO: [CallbackQueryHandler(cb_add_proto, pattern="^add_")],
-            ST_USER: [MessageHandler(Filters.text & ~Filters.command, msg_add_user)],
-            ST_DUR: [MessageHandler(Filters.text & ~Filters.command, msg_add_dur)],
-        },
+    ST_PROTO: [CallbackQueryHandler(cb_add_proto, pattern="^add_")],
+    ST_USER: [MessageHandler(Filters.text & ~Filters.command, msg_user)],
+    ST_DUR: [MessageHandler(Filters.text & ~Filters.command, msg_dur)],
+    ST_QUOTA: [MessageHandler(Filters.text & ~Filters.command, msg_quota)],
+    ST_IPLIMIT: [MessageHandler(Filters.text & ~Filters.command, msg_iplimit)],
+},
         fallbacks=[CommandHandler("cancel", cancel)],
         allow_reentry=True,
     )
