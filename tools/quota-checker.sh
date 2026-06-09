@@ -71,15 +71,15 @@ check_db() {
     [[ -f "$db" ]] || return 0
     > "$tmpdb"
 
-    while read -r user exp uuid quota extra; do
+    while read -r user exp uuid quota iplimit extra; do
         [[ -z "$user" ]] && continue
 
         # Database lama belum punya quota, jadikan unlimited
-        [[ -z "$quota" ]] && quota=0
+        [[ -z "$quota" ]] && quota=0 [[ -z "$iplimit" ]] && iplimit=0
 
         # 0 = unlimited
         if [[ "$quota" == "0" ]]; then
-            echo "$user $exp $uuid $quota" >> "$tmpdb"
+            echo "$user $exp $uuid $quota $iplimit" >> "$tmpdb"
             continue
         fi
 
@@ -97,11 +97,11 @@ check_db() {
                 "$XRAY_BIN" api statsquery --server=127.0.0.1:10085 -reset -pattern "user>>>${user}>>>traffic" >/dev/null 2>&1 || true
                 log "AKUN DIHAPUS: type=$type user=$user"
             else
-                echo "$user $exp $uuid $quota" >> "$tmpdb"
+                echo "$user $exp $uuid $quota $iplimit" >> "$tmpdb"
                 log "GAGAL HAPUS: type=$type user=$user"
             fi
         else
-            echo "$user $exp $uuid $quota" >> "$tmpdb"
+            echo "$user $exp $uuid $quota $iplimit" >> "$tmpdb"
         fi
     done < "$db"
 
