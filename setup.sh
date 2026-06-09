@@ -285,6 +285,33 @@ EOF
 chmod 644 /root/.profile
 
 # ==========================================
+# SETUP VNSTAT BANDWIDTH MONITOR
+# ==========================================
+info "Setting up vnStat bandwidth monitor..."
+
+IFACE=$(ip route | awk '/default/ {print $5; exit}')
+
+if [[ -z "$IFACE" ]]; then
+    warn "Default network interface tidak ditemukan. vnStat dilewati."
+else
+    echo "$IFACE" > /etc/autodansc-interface
+
+    systemctl enable vnstat >/dev/null 2>&1
+    systemctl restart vnstat >/dev/null 2>&1
+
+    # Init database vnStat untuk interface aktif
+    vnstat -u -i "$IFACE" >/dev/null 2>&1 || true
+
+    systemctl restart vnstat >/dev/null 2>&1
+
+    if systemctl is-active --quiet vnstat; then
+        info "vnStat aktif pada interface: $IFACE"
+    else
+        warn "vnStat belum aktif. Cek manual dengan: systemctl status vnstat"
+    fi
+fi
+
+# ==========================================
 # CLEAN FILE
 # ==========================================
 
