@@ -20,11 +20,11 @@ echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━�
 read -rp "👉 Pilih opsi: " opt
 
 case $opt in
-    1) bash /etc/autoscriptvpn/xray/add-trojan.sh ;;
-    2) bash /etc/autoscriptvpn/xray/trial-trojan.sh ;;
-    3) bash /etc/autoscriptvpn/xray/del-trojan.sh ;;
-    4) bash /etc/autoscriptvpn/xray/cek-trojan.sh ;;
-    5) bash /etc/autoscriptvpn/xray/renew-trojan.sh ;;
+    1) bash /etc/AutoDANSC/xray/add-trojan.sh ;;
+    2) bash /etc/AutoDANSC/xray/trial-trojan.sh ;;
+    3) bash /etc/AutoDANSC/xray/del-trojan.sh ;;
+    4) bash /etc/AutoDANSC/xray/cek-trojan.sh ;;
+    5) bash /etc/AutoDANSC/xray/renew-trojan.sh ;;
     x) menu ;;
     *) echo -e "${RED}❌ Pilihan salah!${NC}"; sleep 1; m-trojan ;;
 esac
