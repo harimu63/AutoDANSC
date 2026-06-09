@@ -186,6 +186,11 @@ echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━�
 echo -e "Remarks        : ${user}"
 echo -e "Domain         : ${domain}"
 echo -e "Wildcard       : (bug.com).${domain}"
+if [[ "$quota" == "0" ]]; then
+    echo -e "Limit Kuota    : Unlimited"
+else
+    echo -e "Limit Kuota    : ${quota} GB"
+fi
 echo -e "Port TLS       : ${tls}"
 echo -e "Port none TLS  : ${none}"
 echo -e "Port gRPC      : ${grpc}"
