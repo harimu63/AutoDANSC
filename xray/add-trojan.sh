@@ -15,6 +15,15 @@ grpc="443"
 # input user
 read -rp "Username : " user
 read -rp "Expired (days): " masaaktif
+read -rp "Limit Kuota (GB, 0 = Unlimited): " quota
+
+[[ -z "$quota" ]] && quota=0
+
+if ! [[ "$quota" =~ ^[0-9]+$ ]]; then
+    echo ""
+    echo "ERROR: Limit kuota harus angka. Contoh: 10 atau 0 untuk Unlimited."
+    exit 1
+fi
 
 uuid=$(cat /proc/sys/kernel/random/uuid)
 exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
@@ -108,7 +117,7 @@ if ! systemctl is-active --quiet xray; then
 fi
 
 # simpan database user
-echo "${user} ${exp} ${uuid}" >> /etc/xray/trojan.db
+echo "${user} ${exp} ${uuid} ${quota}" >> /etc/xray/trojan.db
 
 # generate trojan link ws
 trojanlink1="trojan://${uuid}@${domain}:${tls}?path=%2Ftrojan-ws&security=tls&type=ws&host=${domain}&sni=${domain}#${user}"
