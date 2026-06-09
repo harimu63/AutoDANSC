@@ -122,8 +122,7 @@ if ! systemctl is-active --quiet xray; then
 fi
 
 # simpan database user
-echo "${user} ${exp} ${uuid} ${quota}" >> /etc/xray/trojan.db
-
+echo "${user} ${exp} ${uuid} ${quota} ${iplimit}" >> /etc/xray/trojan.db
 # generate trojan link ws
 trojanlink1="trojan://${uuid}@${domain}:${tls}?path=%2Ftrojan-ws&security=tls&type=ws&host=${domain}&sni=${domain}#${user}"
 
