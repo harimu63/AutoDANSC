@@ -90,11 +90,11 @@ EOF
 
     cat >/etc/systemd/system/quota-checker.timer <<'EOF'
 [Unit]
-Description=Run AutoDANSC Xray Quota Checker every 1 minute
+Description=Run AutoDANSC Xray Quota Checker every 10 minute
 
 [Timer]
-OnBootSec=2min
-OnUnitActiveSec=1min
+OnBootSec=11min
+OnUnitActiveSec=10min
 Unit=quota-checker.service
 
 [Install]
