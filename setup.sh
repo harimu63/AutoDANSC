@@ -242,17 +242,17 @@ chmod +x tools/*.sh
 # COPY RUNTIME SCRIPT
 # ==========================================
 
-info "Menyalin semua submenu ke /etc/autoscriptvpn/..."
+info "Menyalin semua submenu ke /etc/AutoDANSC/..."
 
-mkdir -p /etc/autoscriptvpn/{ssh,xray,wg,udp,tools}
+mkdir -p /etc/AutoDANSC/{ssh,xray,wg,udp,tools}
 
-cp -r ssh/* /etc/autoscriptvpn/ssh/
-cp -r xray/* /etc/autoscriptvpn/xray/
-cp -r wg/* /etc/autoscriptvpn/wg/
-cp -r udp/* /etc/autoscriptvpn/udp/
-cp -r tools/* /etc/autoscriptvpn/tools/
+cp -r ssh/* /etc/AutoDANSC/ssh/
+cp -r xray/* /etc/AutoDANSC/xray/
+cp -r wg/* /etc/AutoDANSC/wg/
+cp -r udp/* /etc/AutoDANSC/udp/
+cp -r tools/* /etc/AutoDANSC/tools/
 
-chmod +x /etc/autoscriptvpn/*/*.sh
+chmod +x /etc/AutoDANSC/*/*.sh
 
 # ==========================================
 # ==========================================
