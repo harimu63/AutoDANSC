@@ -137,6 +137,12 @@ echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━�
 echo -e "Remarks        : ${user}"
 echo -e "Domain         : ${domain}"
 echo -e "Wildcard       : (bug.com).${domain}"
+if [[ "$iplimit" == "0" ]]; then
+    echo -e "Limit IP       : Unlimited"
+else
+    echo -e "Limit IP       : ${iplimit} IP"
+fi
+
 if [[ "$quota" == "0" ]]; then
     echo -e "Limit Kuota    : Unlimited"
 else
