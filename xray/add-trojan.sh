@@ -16,8 +16,10 @@ grpc="443"
 read -rp "Username : " user
 read -rp "Expired (days): " masaaktif
 read -rp "Limit Kuota (GB, 0 = Unlimited): " quota
+read -rp "Limit IP Login (0 = Unlimited): " iplimit
 
 [[ -z "$quota" ]] && quota=0
+[[ -z "$iplimit" ]] && iplimit=0
 
 if ! [[ "$quota" =~ ^[0-9]+$ ]]; then
     echo ""
@@ -25,8 +27,11 @@ if ! [[ "$quota" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
-uuid=$(cat /proc/sys/kernel/random/uuid)
-exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
+if ! [[ "$iplimit" =~ ^[0-9]+$ ]]; then
+    echo ""
+    echo "ERROR: Limit IP harus angka. Contoh: 2 atau 0 untuk Unlimited."
+    exit 1
+fi
 
 # validasi config lama
 if ! jq empty /etc/xray/config.json >/dev/null 2>&1; then
