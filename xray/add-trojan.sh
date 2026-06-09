@@ -33,6 +33,9 @@ if ! [[ "$iplimit" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
+uuid=$(cat /proc/sys/kernel/random/uuid)
+exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
+
 # validasi config lama
 if ! jq empty /etc/xray/config.json >/dev/null 2>&1; then
     echo ""
