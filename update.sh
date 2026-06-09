@@ -72,6 +72,41 @@ echo -e "${cyan}[4/5] Setup tools di /usr/bin...${NC}"
 cp -f tools/trial-cleaner.sh /usr/bin/trial-cleaner.sh
 chmod +x /usr/bin/trial-cleaner.sh
 
+echo "[INFO] Updating quota checker..."
+
+if [[ -f "$REPO_DIR/tools/quota-checker.sh" ]]; then
+    cp "$REPO_DIR/tools/quota-checker.sh" /usr/local/sbin/quota-checker
+    chmod +x /usr/local/sbin/quota-checker
+
+    cat >/etc/systemd/system/quota-checker.service <<'EOF'
+[Unit]
+Description=AutoDANSC Xray Quota Checker
+After=xray.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/quota-checker
+EOF
+
+    cat >/etc/systemd/system/quota-checker.timer <<'EOF'
+[Unit]
+Description=Run AutoDANSC Xray Quota Checker every 1 minute
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+Unit=quota-checker.service
+
+[Install]
+WantedBy=timers.target
+EOF
+
+    systemctl daemon-reload
+    systemctl enable --now quota-checker.timer
+else
+    echo "[WARNING] tools/quota-checker.sh tidak ditemukan, skip quota checker"
+fi
+
 # Expiry check
 cp -f tools/expiry-check.sh /usr/bin/expiry-check.sh
 chmod +x /usr/bin/expiry-check.sh
