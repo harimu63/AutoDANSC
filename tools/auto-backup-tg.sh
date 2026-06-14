@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TG_CONFIG="/etc/autoscriptvpn/telegram.conf"
+TG_CONFIG="/etc/AutoDANSC/telegram.conf"
 CONFIG="/etc/xray/config.json"
 LOG="/var/log/backup-tg.log"
 
