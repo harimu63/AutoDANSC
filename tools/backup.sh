@@ -11,7 +11,7 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-TG_CONFIG="/etc/autoscriptvpn/telegram.conf"
+TG_CONFIG="/etc/AutoDANSC/telegram.conf"
 CONFIG="/etc/xray/config.json"
 [[ -f "$TG_CONFIG" ]] && source "$TG_CONFIG"
 
@@ -346,7 +346,7 @@ function setup_telegram() {
     read -rp "🤖 Bot Token : " token
     read -rp "💬 Chat ID   : " chatid
 
-    mkdir -p /etc/autoscriptvpn
+    mkdir -p /etc/AutoDANSC
     echo "TG_TOKEN=$token" > "$TG_CONFIG"
     echo "TG_CHATID=$chatid" >> "$TG_CONFIG"
 
@@ -360,13 +360,13 @@ function setup_telegram() {
         # Buat script auto backup
         cat > /usr/bin/auto-backup-tg.sh << 'AUTOBACKUP'
 #!/bin/bash
-source /etc/autoscriptvpn/telegram.conf
+source /etc/AutoDANSC/telegram.conf
 bash /usr/bin/auto-backup-tg.sh
 AUTOBACKUP
         chmod +x /usr/bin/auto-backup-tg.sh
 
         # Copy backup.sh ke /usr/bin agar bisa dipanggil
-        cp /etc/autoscriptvpn/tools/backup.sh /usr/bin/backup-akun.sh 2>/dev/null
+        cp /etc/AutoDANSC/tools/backup.sh /usr/bin/backup-akun.sh 2>/dev/null
         chmod +x /usr/bin/backup-akun.sh 2>/dev/null
 
         # Pasang cron
