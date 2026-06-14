@@ -267,6 +267,13 @@ chmod +x /usr/bin/expiry-check.sh
 
 info "Auto expiry cron dipasang"
 
+# SETUP TRIAL CLEANER CRON
+cp -f tools/trial-cleaner.sh /usr/bin/trial-cleaner.sh
+chmod +x /usr/bin/trial-cleaner.sh
+touch /etc/xray/trial.db
+
+(crontab -l 2>/dev/null | grep -v "trial-cleaner"; echo "*/5 * * * * /usr/bin/trial-cleaner.sh >> /var/log/trial.log 2>&1") | crontab -
+info "Trial cleaner cron dipasang tiap 5 menit"
 
 # AUTO MENU LOGIN
 # ==========================================
