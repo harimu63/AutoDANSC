@@ -337,49 +337,101 @@ function do_restore() {
 function setup_telegram() {
     clear
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "\E[44;1;39m         SETUP TELEGRAM BACKUP BOT           \E[0m"
+    echo -e "\E[44;1;39m SETUP TELEGRAM BACKUP BOT \E[0m"
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
     echo -e "1. Telegram → cari ${YELLOW}@BotFather${NC} → /newbot → copy token"
     echo -e "2. Cari ${YELLOW}@userinfobot${NC} → /start → copy ID"
     echo ""
-    read -rp "🤖 Bot Token : " token
-    read -rp "💬 Chat ID   : " chatid
+
+    read -rp " Bot Token : " token
+    read -rp " Chat ID   : " chatid
 
     mkdir -p /etc/AutoDANSC
-    echo "TG_TOKEN=$token" > "$TG_CONFIG"
-    echo "TG_CHATID=$chatid" >> "$TG_CONFIG"
+    mkdir -p /etc/AutoDANSC/tools
+    mkdir -p /var/log
+
+    cat > "$TG_CONFIG" <<EOF
+TG_TOKEN=$token
+TG_CHATID=$chatid
+EOF
+
+    chmod 600 "$TG_CONFIG"
 
     result=$(curl -s "https://api.telegram.org/bot${token}/sendMessage" \
         -d chat_id="$chatid" \
-        -d text="✅ Gen Autoscript - Bot terhubung! Auto backup aktif setiap hari jam 01:00." 2>/dev/null)
+        -d text="✅ AutoDANSC - Bot backup terhubung! Auto backup aktif setiap hari jam 01:00." 2>/dev/null)
 
     if echo "$result" | grep -q '"ok":true'; then
         echo -e "\n${GREEN}✅ Bot Telegram terhubung!${NC}"
 
-        # Buat script auto backup
+        # Pastikan file auto-backup asli tersedia di folder install
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+        if [[ -f "$SCRIPT_DIR/auto-backup-tg.sh" ]]; then
+            cp "$SCRIPT_DIR/auto-backup-tg.sh" /etc/AutoDANSC/tools/auto-backup-tg.sh
+            chmod +x /etc/AutoDANSC/tools/auto-backup-tg.sh
+        elif [[ -f "/root/AutoDANSC/tools/auto-backup-tg.sh" ]]; then
+            cp /root/AutoDANSC/tools/auto-backup-tg.sh /etc/AutoDANSC/tools/auto-backup-tg.sh
+            chmod +x /etc/AutoDANSC/tools/auto-backup-tg.sh
+        fi
+
+        # Buat launcher auto backup yang benar
         cat > /usr/bin/auto-backup-tg.sh << 'AUTOBACKUP'
 #!/bin/bash
-source /etc/AutoDANSC/telegram.conf
-bash /usr/bin/auto-backup-tg.sh
+LOG="/var/log/backup-tg.log"
+
+{
+    echo "=================================================="
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Menjalankan auto backup Telegram..."
+
+    if [[ -x /etc/AutoDANSC/tools/auto-backup-tg.sh ]]; then
+        bash /etc/AutoDANSC/tools/auto-backup-tg.sh
+        EXIT_CODE=$?
+    elif [[ -x /root/AutoDANSC/tools/auto-backup-tg.sh ]]; then
+        bash /root/AutoDANSC/tools/auto-backup-tg.sh
+        EXIT_CODE=$?
+    else
+        echo "ERROR: File auto-backup-tg.sh asli tidak ditemukan."
+        EXIT_CODE=1
+    fi
+
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Auto backup selesai. Exit code: $EXIT_CODE"
+    echo "=================================================="
+
+    exit $EXIT_CODE
+} >> "$LOG" 2>&1
 AUTOBACKUP
+
         chmod +x /usr/bin/auto-backup-tg.sh
 
-        # Copy backup.sh ke /usr/bin agar bisa dipanggil
-        cp /etc/AutoDANSC/tools/backup.sh /usr/bin/backup-akun.sh 2>/dev/null
-        chmod +x /usr/bin/backup-akun.sh 2>/dev/null
+        # Copy backup.sh ke /usr/bin agar menu backup tetap bisa dipanggil
+        if [[ -f "$SCRIPT_DIR/backup.sh" ]]; then
+            cp "$SCRIPT_DIR/backup.sh" /usr/bin/backup-akun.sh
+            chmod +x /usr/bin/backup-akun.sh
+        fi
 
-        # Pasang cron
-        (crontab -l 2>/dev/null | grep -v "auto-backup-tg"; \
-         echo "0 1 * * * /usr/bin/auto-backup-tg.sh") | crontab -
+        # Hapus cron lama yang salah, lalu pasang cron baru jam 01:00 setiap hari
+        (crontab -l 2>/dev/null | grep -v "auto-backup-tg"; echo "0 1 * * * /usr/bin/auto-backup-tg.sh") | crontab -
+
+        # Pastikan cron service aktif
+        if systemctl list-unit-files | grep -q "^cron.service"; then
+            systemctl enable cron >/dev/null 2>&1
+            systemctl restart cron >/dev/null 2>&1
+        elif systemctl list-unit-files | grep -q "^crond.service"; then
+            systemctl enable crond >/dev/null 2>&1
+            systemctl restart crond >/dev/null 2>&1
+        fi
 
         echo -e "${GREEN}✅ Auto backup setiap hari jam 01:00 aktif!${NC}"
+        echo -e "${CYAN}Cron terpasang:${NC}"
+        crontab -l | grep "auto-backup-tg"
+
     else
         echo -e "${RED}❌ Gagal konek! Cek token & chat ID.${NC}"
         rm -f "$TG_CONFIG"
     fi
 }
-
 # ==========================================
 # MAIN MENU
 # ==========================================
