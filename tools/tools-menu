@@ -19,13 +19,13 @@ echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━�
 read -rp "Pilih: " opt
 
 case $opt in
-    1) bash /etc/autoscriptvpn/tools/backup.sh ;;
-    2) bash /etc/autoscriptvpn/tools/speedtest.sh ;;
-    3) bash /etc/autoscriptvpn/tools/domain.sh ;;
-    4) bash /etc/autoscriptvpn/tools/running.sh ;;
-    5) bash /etc/autoscriptvpn/tools/fix-sni.sh ;;
-    6) bash /etc/autoscriptvpn/tools/auto-reboot.sh ;;
-    7) bash /etc/autoscriptvpn/tools/rebuild-db.sh ;;
+    1) bash /etc/AutoDANSC/tools/backup.sh ;;
+    2) bash /etc/AutoDANSC/tools/speedtest.sh ;;
+    3) bash /etc/AutoDANSC/tools/domain.sh ;;
+    4) bash /etc/AutoDANSC/tools/running.sh ;;
+    5) bash /etc/AutoDANSC/tools/fix-sni.sh ;;
+    6) bash /etc/AutoDANSC/tools/auto-reboot.sh ;;
+    7) bash /etc/AutoDANSC/tools/rebuild-db.sh ;;
     8)
     if [[ -f "$TOOLS_DIR/bot-telegram-menu.sh" ]]; then
       bash "$TOOLS_DIR/bot-telegram-menu.sh"
