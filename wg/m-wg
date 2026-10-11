@@ -1,0 +1,63 @@
+#!/bin/bash
+# Menu WireGuard - by znand-dev
+
+# Warna
+GREEN='\e[1;32m'
+YELLOW='\e[1;33m'
+CYAN='\e[1;36m'
+NC='\e[0m'
+
+clear
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${CYAN}             ⚙️ MENU WIREGUARD VPN             ${NC}"
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}[1]${NC} Tambah Akun WireGuard"
+echo -e "${GREEN}[2]${NC} Hapus Akun WireGuard"
+echo -e "${GREEN}[3]${NC} Lihat Konfigurasi Akun"
+echo -e "${GREEN}[4]${NC} Cek Status WireGuard"
+echo -e "${GREEN}[5]${NC} Restart WireGuard"
+echo -e "${GREEN}[x]${NC} Kembali ke menu utama"
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+read -p "👉 Pilih opsi: " opt
+
+case $opt in
+
+1)
+clear
+bash /etc/autoscriptvpn/wg/wg-add.sh
+;;
+
+2)
+clear
+bash /etc/autoscriptvpn/wg/wg-del.sh
+;;
+
+3)
+clear
+bash /etc/autoscriptvpn/wg/wg-show.sh
+;;
+
+4)
+clear
+wg show
+;;
+
+5)
+clear
+systemctl restart wg-quick@wg0
+
+echo ""
+echo "✅ WireGuard direstart!"
+echo ""
+;;
+
+x)
+menu
+;;
+
+*)
+echo "❌ Pilihan salah!"
+sleep 1
+exec m-wg
+;;
+esac

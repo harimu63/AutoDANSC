@@ -1,0 +1,11 @@
+[Unit]
+Description=SSH SSL WS
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/bin/ws-stunnel 2096
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

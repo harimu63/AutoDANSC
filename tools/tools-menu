@@ -1,0 +1,41 @@
+#!/bin/bash
+clear
+
+YELLOW='\e[1;33m'; CYAN='\e[1;36m'; GREEN='\e[1;32m'; RED='\e[1;31m'; NC='\e[0m'
+
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${CYAN}               ⚙️  MENU TOOLS                   ${NC}"
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e " ${GREEN}[1]${NC} Backup & Restore Akun"
+echo -e " ${GREEN}[2]${NC} Speedtest VPS"
+echo -e " ${GREEN}[3]${NC} Ganti Domain Xray"
+echo -e " ${GREEN}[4]${NC} Cek Status Layanan"
+echo -e " ${GREEN}[5]${NC} 🔧 Fix SNI / SSL"
+echo -e " ${GREEN}[6]${NC} ⏰ Auto Reboot VPS"
+echo -e " ${GREEN}[7]${NC} 🔄 Rebuild Database (Sinkron Config)"
+echo -e " ${GREEN}[8]${NC} 🤖 Bot Telegram Manager"
+echo -e " ${GREEN}[x]${NC} Kembali ke Menu Utama"
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+read -rp "Pilih: " opt
+
+case $opt in
+    1) bash /etc/AutoDANSC/tools/backup.sh ;;
+    2) bash /etc/AutoDANSC/tools/speedtest.sh ;;
+    3) bash /etc/AutoDANSC/tools/domain.sh ;;
+    4) bash /etc/AutoDANSC/tools/running.sh ;;
+    5) bash /etc/AutoDANSC/tools/fix-sni.sh ;;
+    6) bash /etc/AutoDANSC/tools/auto-reboot.sh ;;
+    7) bash /etc/AutoDANSC/tools/rebuild-db.sh ;;
+    8)
+    if [[ -f "$TOOLS_DIR/bot-telegram-menu.sh" ]]; then
+      bash "$TOOLS_DIR/bot-telegram-menu.sh"
+    else
+      echo -e "${RED}❌ File bot-telegram-menu.sh belum ada di $TOOLS_DIR${NC}"
+      echo -e "${YELLOW}Upload dulu file bot-telegram-menu.sh ke folder tools.${NC}"
+      sleep 3
+      tools-menu
+    fi
+    ;;
+    x) menu ;;
+    *) echo -e "${RED}❌ Pilihan salah!${NC}"; sleep 1; tools-menu ;;
+esac
