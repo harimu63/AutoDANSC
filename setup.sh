@@ -341,25 +341,68 @@ fi
 # ==========================================
 info "Setting up vnStat bandwidth monitor..."
 
-IFACE=$(ip route | awk '/default/ {print $5; exit}')
+IFACE=$(ip route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="dev") print $(i+1); exit}')
+
+if [[ -z "$IFACE" ]]; then
+    IFACE=$(ip route | awk '/default/ {print $5; exit}')
+fi
 
 if [[ -z "$IFACE" ]]; then
     warn "Default network interface tidak ditemukan. vnStat dilewati."
 else
-    echo "$IFACE" > /etc/autodansc-interface
-
+    info "Network interface detected: $IFACE"
+    
+    # Create vnstat directory
+    mkdir -p /etc/vnstat
+    echo "$IFACE" > /etc/vnstat/interface
+    
+    # Stop vnstat service
+    systemctl stop vnstat >/dev/null 2>&1
+    
+    # Remove old database
+    rm -f /var/lib/vnstat/.$IFACE 2>/dev/null
+    rm -f /var/lib/vnstat/$IFACE 2>/dev/null
+    
+    # Configure vnstat
+    if [[ -f /etc/vnstat.conf ]]; then
+        if grep -q "^Interface" /etc/vnstat.conf; then
+            sed -i "s/^Interface .*/Interface \"$IFACE\"/" /etc/vnstat.conf
+        else
+            echo "Interface \"$IFACE\"" >> /etc/vnstat.conf
+        fi
+        
+        # Set update interval lebih cepat
+        if grep -q "^UpdateInterval" /etc/vnstat.conf; then
+            sed -i "s/^UpdateInterval .*/UpdateInterval 20/" /etc/vnstat.conf
+        else
+            echo "UpdateInterval 20" >> /etc/vnstat.conf
+        fi
+        
+        if grep -q "^SaveInterval" /etc/vnstat.conf; then
+            sed -i "s/^SaveInterval .*/SaveInterval 5/" /etc/vnstat.conf
+        else
+            echo "SaveInterval 5" >> /etc/vnstat.conf
+        fi
+    fi
+    
+    # Create database for interface
+    vnstat --add -i "$IFACE" >/dev/null 2>&1
+    vnstat --create -i "$IFACE" >/dev/null 2>&1
+    
+    # Enable and start service
     systemctl enable vnstat >/dev/null 2>&1
-    systemctl restart vnstat >/dev/null 2>&1
-
-    # Init database vnStat untuk interface aktif
-    vnstat -u -i "$IFACE" >/dev/null 2>&1 || true
-
-    systemctl restart vnstat >/dev/null 2>&1
-
+    systemctl start vnstat >/dev/null 2>&1
+    
+    sleep 2
+    
+    # Force initial update
+    vnstat -u -i "$IFACE" >/dev/null 2>&1
+    
     if systemctl is-active --quiet vnstat; then
-        info "vnStat aktif pada interface: $IFACE"
+        info "✅ vnStat aktif pada interface: $IFACE"
+        info "   Data bandwidth akan mulai terakumulasi dalam beberapa menit"
     else
-        warn "vnStat belum aktif. Cek manual dengan: systemctl status vnstat"
+        warn "⚠️  vnStat belum aktif. Jalankan: bash $SCRIPT_DIR/tools/fix-vnstat.sh"
     fi
 fi
 

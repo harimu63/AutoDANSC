@@ -61,22 +61,34 @@ RAM=$(free -m | awk 'NR==2{printf "%s/%sMB (%.0f%%)", $3,$2,$3*100/$2}')
 DISK=$(df -h / | awk 'NR==2{printf "%s/%s (%s)", $3,$2,$5}')
 
 # ===== BANDWIDTH via vnstat =====
-IFACE=$(ip route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="dev") print $(i+1)}' | head -1)
+# Try to get interface from saved file first
+if [[ -f /etc/vnstat/interface ]]; then
+    IFACE=$(cat /etc/vnstat/interface 2>/dev/null)
+fi
+
+# If not found, detect it
+if [[ -z "$IFACE" ]]; then
+    IFACE=$(ip route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="dev") print $(i+1)}' | head -1)
+fi
+
 [[ -z "$IFACE" ]] && IFACE=$(ip link | awk -F': ' '/^[0-9]+: (eth|ens|enp|eno)/{print $2; exit}')
 [[ -z "$IFACE" ]] && IFACE="eth0"
 
-# Auto add interface ke vnstat jika belum terdaftar
-if ! vnstat -i "$IFACE" 2>/dev/null | grep -q "eth\|ens\|enp"; then
-    vnstat -i "$IFACE" --add >/dev/null 2>&1
-    systemctl restart vnstat >/dev/null 2>&1
+# Ensure vnstat service is running
+if ! systemctl is-active --quiet vnstat 2>/dev/null; then
+    systemctl start vnstat >/dev/null 2>&1
 fi
 
-# Auto init vnstat jika belum ada
+# Check if interface exists in vnstat database
 if [[ -n "$IFACE" ]]; then
     if ! vnstat -i "$IFACE" >/dev/null 2>&1; then
-        vnstat -i "$IFACE" --add >/dev/null 2>&1
+        # Interface not in database, add it
+        vnstat --add -i "$IFACE" >/dev/null 2>&1
+        vnstat --create -i "$IFACE" >/dev/null 2>&1
         systemctl restart vnstat >/dev/null 2>&1
-        sleep 1
+        sleep 2
+        # Force initial update
+        vnstat -u -i "$IFACE" >/dev/null 2>&1
     fi
 
     # Support vnstat 2.x dan 1.x
@@ -136,10 +148,10 @@ except: print('0 B')
     fi
 fi
 
-[[ -z "$TODAY" || "$TODAY" == *"Not enough"* ]]     && TODAY="Mengumpulkan..."
-[[ -z "$YESTERDAY" || "$YESTERDAY" == *"Not enough"* ]] && YESTERDAY="Mengumpulkan..."
-[[ -z "$MONTH" || "$MONTH" == *"Not enough"* ]]     && MONTH="Mengumpulkan..."
-[[ -z "$TOTAL_BW" || "$TOTAL_BW" == *"Not enough"* ]]  && TOTAL_BW="Mengumpulkan..."
+[[ -z "$TODAY" || "$TODAY" == *"Not enough"* ]]     && TODAY="0 B (Baru Init)"
+[[ -z "$YESTERDAY" || "$YESTERDAY" == *"Not enough"* ]] && YESTERDAY="0 B (Baru Init)"
+[[ -z "$MONTH" || "$MONTH" == *"Not enough"* ]]     && MONTH="0 B (Baru Init)"
+[[ -z "$TOTAL_BW" || "$TOTAL_BW" == *"Not enough"* ]]  && TOTAL_BW="0 B (Baru Init)"
 
 # ===== STATUS SERVIS =====
 svc_status() {
