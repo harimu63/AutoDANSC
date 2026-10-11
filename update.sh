@@ -18,14 +18,54 @@ echo ""
 REPO_DIR="$HOME/AutoDANSC"
 INSTALL_DIR="/etc/AutoDANSC"
 
-[[ ! -d "$REPO_DIR" ]] && echo -e "${red}Folder repo tidak ditemukan!${NC}" && exit 1
+# Jika folder repo tidak ada, clone dulu
+if [[ ! -d "$REPO_DIR" ]]; then
+    echo -e "${yellow}Folder repo tidak ditemukan, cloning dari GitHub...${NC}"
+    git clone https://github.com/harimu63/AutoDANSC.git "$REPO_DIR" || {
+        echo -e "${red}Gagal clone dari GitHub!${NC}"
+        exit 1
+    }
+fi
 
 cd "$REPO_DIR"
 
-echo -e "${cyan}[1/5] Pull update dari GitHub...${NC}"
-git pull || { echo -e "${red}Gagal pull dari GitHub!${NC}"; exit 1; }
+echo -e "${cyan}[1/6] Pull update dari GitHub...${NC}"
+git reset --hard HEAD  # Reset local changes
+git pull origin main || { echo -e "${red}Gagal pull dari GitHub!${NC}"; exit 1; }
+echo -e "${green}✅ Update dari GitHub berhasil${NC}"
 
-echo -e "${cyan}[2/5] Copy script menu ke /usr/bin...${NC}"
+echo -e "${cyan}[2/6] Update config files (xray.conf, nginx.conf)...${NC}"
+
+# Backup config lama
+if [[ -f /etc/nginx/conf.d/xray.conf ]]; then
+    cp /etc/nginx/conf.d/xray.conf /etc/nginx/conf.d/xray.conf.bak.$(date +%Y%m%d_%H%M%S)
+    echo -e "${yellow}⚠️  Backup: /etc/nginx/conf.d/xray.conf.bak.$(date +%Y%m%d_%H%M%S)${NC}"
+fi
+
+# Update xray.conf (fix port Trojan)
+if [[ -f "$REPO_DIR/config/xray.conf" ]]; then
+    cp -f "$REPO_DIR/config/xray.conf" /etc/nginx/conf.d/xray.conf
+    echo -e "${green}✅ xray.conf updated (Trojan port fixed: 25432)${NC}"
+fi
+
+# Update nginx.conf jika ada
+if [[ -f "$REPO_DIR/config/nginx.conf" ]]; then
+    cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak.$(date +%Y%m%d_%H%M%S) 2>/dev/null
+    cp -f "$REPO_DIR/config/nginx.conf" /etc/nginx/nginx.conf
+    echo -e "${green}✅ nginx.conf updated${NC}"
+fi
+
+# Test nginx config
+nginx -t >/dev/null 2>&1 && {
+    echo -e "${green}✅ Nginx config valid${NC}"
+    systemctl reload nginx
+} || {
+    echo -e "${red}❌ Nginx config error, restoring backup...${NC}"
+    cp /etc/nginx/conf.d/xray.conf.bak.* /etc/nginx/conf.d/xray.conf 2>/dev/null
+    systemctl reload nginx
+}
+
+echo -e "${cyan}[3/6] Copy script menu ke /usr/bin...${NC}"
 
 # Menu utama
 cp -f menu.sh /usr/bin/menu && chmod +x /usr/bin/menu
@@ -43,7 +83,7 @@ for f in tools/clearcache.sh tools/running.sh; do
     [[ -f "$f" ]] && cp -f "$f" /usr/bin/$(basename $f .sh) && chmod +x /usr/bin/$(basename $f .sh)
 done
 
-echo -e "${cyan}[3/5] Copy semua script ke $INSTALL_DIR...${NC}"
+echo -e "${cyan}[4/6] Copy semua script ke $INSTALL_DIR...${NC}"
 
 # Buat folder jika belum ada
 mkdir -p $INSTALL_DIR/{xray,ssh,wg,udp,tools}
@@ -66,7 +106,7 @@ done
 # Copy trial ssh
 [[ -f ssh/trial-ssh.sh ]] && cp -f ssh/trial-ssh.sh $INSTALL_DIR/ssh/
 
-echo -e "${cyan}[4/5] Setup tools di /usr/bin...${NC}"
+echo -e "${cyan}[5/6] Setup tools di /usr/bin...${NC}"
 
 # Trial cleaner
 cp -f tools/trial-cleaner.sh /usr/bin/trial-cleaner.sh
@@ -115,7 +155,7 @@ chmod +x /usr/bin/expiry-check.sh
 cp -f tools/backup.sh /usr/bin/backup-akun.sh
 chmod +x /usr/bin/backup-akun.sh
 
-echo -e "${cyan}[5/5] Setup cron jobs...${NC}"
+echo -e "${cyan}[6/6] Setup cron jobs...${NC}"
 
 # Reset cron yang relevan lalu pasang ulang
 crontab -l 2>/dev/null | grep -v "trial-cleaner\|expiry-check\|auto-backup-tg" > /tmp/crontab_tmp
@@ -132,5 +172,18 @@ crontab -l | grep -E "trial-cleaner|expiry-check|auto-backup"
 
 echo ""
 echo -e "${blue}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${green}✅ Update selesai! Semua fitur terupdate.${NC}"
+echo -e "${green}✅ UPDATE SELESAI!${NC}"
+echo ""
+echo -e "${cyan}📋 CHANGELOG:${NC}"
+echo -e "   ${green}✅${NC} Fix typo path ~/AutoDANSC di install/xray.sh"
+echo -e "   ${green}✅${NC} Fix port Trojan WebSocket 25433 → 25432"
+echo -e "   ${green}✅${NC} Fix variable \$SCRIPT_DIR di setup.sh"
+echo -e "   ${green}✅${NC} Fix syntax error di quota-checker.sh"
+echo -e "   ${green}✅${NC} Add auto-renew SSL di tools/domain.sh"
+echo ""
+echo -e "${yellow}📝 CATATAN:${NC}"
+echo -e "   • Jalankan ${cyan}systemctl restart xray nginx${NC} untuk apply config baru"
+echo -e "   • Test domain.sh: ${cyan}bash /etc/AutoDANSC/tools/domain.sh${NC}"
+echo -e "   • Lihat log: ${cyan}tail -f /var/log/xray/error.log${NC}"
+echo ""
 echo -e "${blue}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
